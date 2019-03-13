@@ -248,11 +248,11 @@ public class LocaleManager{
 	 * 
 	 * @return true if Bukkit version is at 1.12.2 or below
 	 */
-	public static boolean isBelow113() {
+	public boolean isBelow113() {
 		return _isBelow113(Bukkit.getServer().getBukkitVersion().split("-")[0]);
 	}
 	
-	private static boolean _isBelow113(String bukkitVersion) {
+	private boolean _isBelow113(String bukkitVersion) {
 		if (bukkitVersion.matches("^[0-9.]+$")) {
 			switch(bukkitVersion) {
 			case "1.12.2" :
