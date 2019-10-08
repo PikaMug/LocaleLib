@@ -13,6 +13,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.Rabbit;
 import org.bukkit.entity.Villager.Career;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
 
 public class LocaleManager{
@@ -46,7 +47,8 @@ public class LocaleManager{
 	 * Send message with item name translated to the client's locale.
 	 * Material is required. Durability arg is arbitrary for 1.13+
 	 * and can be ignored by setting to a value less than 0.
-	 * Enchantments are optional and may be left null or empty.<p>
+	 * Enchantments & meta are optional and may be left null or empty,
+	 * but note that most Potions use meta for 1.13+.<p>
 	 * 
 	 * Message should contain {@code <item>} string for replacement by
 	 * this method (along with applicable {@code <enchantment>} strings).
@@ -56,9 +58,10 @@ public class LocaleManager{
 	 * @param material The item to be translated
 	 * @param durability Durability for the item being translated
 	 * @param enchantments Enchantments for the item being translated
+	 * @param meta ItemMeta for the item being translated
 	 */
 	@SuppressWarnings("deprecation")
-	public boolean sendMessage(Player player, String message, Material material, short durability, Map<Enchantment, Integer> enchantments) {
+	public boolean sendMessage(Player player, String message, Material material, short durability, Map<Enchantment, Integer> enchantments, ItemMeta meta) {
 		if (material == null) {
 			return false;
 		}
@@ -110,6 +113,10 @@ public class LocaleManager{
 				Bukkit.getLogger().severe("[LocaleLib] Unable to query Material: " + material.name());
 				return false;
 			}
+			if (meta != null && meta instanceof PotionMeta) {
+                matKey = "item.minecraft.potion.effect." + ((PotionMeta)meta).getBasePotionData().getType().name().toLowerCase()
+                        .replace("regen", "regeneration").replace("speed", "swiftness");
+            }
 			if (enchantments != null && !enchantments.isEmpty()) {
 				int count = 0;
 				for (Enchantment e : enchantments.keySet()) {
@@ -127,6 +134,25 @@ public class LocaleManager{
 		Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + player.getName() + " [\"" + msg + "\"]");
 		return true;
 	}
+	
+	/**
+     * Send message with item name translated to the client's locale.
+     * Material is required. Durability arg is arbitrary for 1.13+
+     * and can be ignored by setting to a value less than 0.
+     * Enchantments are optional and may be left null or empty.<p>
+     * 
+     * Message should contain {@code <item>} string for replacement by
+     * this method (along with applicable {@code <enchantment>} strings).
+     * 
+     * @param player The player whom the message is to be sent to
+     * @param message The message to be sent to the player
+     * @param material The item to be translated
+     * @param durability Durability for the item being translated
+     * @param enchantments Enchantments for the item being translated
+     */
+    public boolean sendMessage(Player player, String message, Material material, short durability, Map<Enchantment, Integer> enchantments) {
+        return sendMessage(player, message, material, durability, enchantments, null);
+    }
 	
 	/**
 	 * Send message with enchantments translated to the client's locale.
