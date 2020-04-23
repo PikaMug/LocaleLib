@@ -2,8 +2,13 @@ package me.pikamug.localelib;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang.NullArgumentException;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
@@ -16,9 +21,10 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
 
-public class LocaleManager{
+public class LocaleManager {
 	private static Class<?> craftMagicNumbers = null;
 	private static Class<?> itemClazz = null;
+	private static Object locale;
 	private static boolean oldVersion = false;
 	private static boolean hasBasePotionData = false;
 	private Map<String, String> oldBlocks = LocaleKeys.getBlockKeys();
@@ -36,9 +42,11 @@ public class LocaleManager{
 		}
 		String version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
 	    try {
+	    	Class<?> localeClass = Class.forName("net.minecraft.server.{v}.LocaleLanguage".replace("{v}", version));
+            locale = localeClass.newInstance();
 	        craftMagicNumbers = Class.forName("org.bukkit.craftbukkit.{v}.util.CraftMagicNumbers".replace("{v}", version));
 	        itemClazz = Class.forName("net.minecraft.server.{v}.Item".replace("{v}", version));
-	    } catch (ClassNotFoundException e) {
+	    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
 	        e.printStackTrace();
 	    }
 	}
@@ -60,77 +68,24 @@ public class LocaleManager{
 	 * @param enchantments Enchantments for the item being translated
 	 * @param meta ItemMeta for the item being translated
 	 */
-	@SuppressWarnings("deprecation")
 	public boolean sendMessage(Player player, String message, Material material, short durability, Map<Enchantment, Integer> enchantments, ItemMeta meta) {
 		if (material == null) {
 			return false;
 		}
+		
 		String matKey = "";
-		String[] enchKeys = enchantments != null ? new String[enchantments.size()] : null;
-		if (oldVersion) {
-			if (material.isBlock()) {
-				if (durability >= 0 && oldBlocks.containsKey(material.name() + "." + durability)) {
-					matKey = oldBlocks.get(material.name() + "." + durability);
-				} else if (oldBlocks.containsKey(material.name())) {
-					matKey = oldBlocks.get(material.name());
-				} else {
-					Bukkit.getLogger().severe("[LocaleLib] Block not found: " + material.name() + "." + durability);
-					return false;
-				}
-			} else {
-				ItemStack i = new ItemStack(material, 1, durability);
-				if (durability >= 0 && i.getItemMeta() instanceof PotionMeta) {
-					if (hasBasePotionData) {
-						if (material.equals(Material.POTION)) {
-							matKey = oldPotions.get(((PotionMeta)i.getItemMeta()).getBasePotionData().getType().name());
-						} else if (material.equals(Material.LINGERING_POTION)) {
-							matKey = oldLingeringPotions.get(((PotionMeta)i.getItemMeta()).getBasePotionData().getType().name());
-						} else if (material.equals(Material.SPLASH_POTION)) {
-							matKey = oldSplashPotions.get(((PotionMeta)i.getItemMeta()).getBasePotionData().getType().name());
-						}
-					}
-				} else if (durability >= 0 && oldItems.containsKey(material.name() + "." + durability)) {
-					matKey = oldItems.get(material.name() + "." + durability);
-				} else if (oldItems.containsKey(material.name())) {
-					matKey = oldItems.get(material.name());
-				} else {
-					Bukkit.getLogger().severe("[LocaleLib] Item not found: " + material.name() + "." + durability);
-					return false;
-				}
-			}
-			if (enchantments != null && !enchantments.isEmpty()) {
-				int count = 0;
-				for (Enchantment e : enchantments.keySet()) {
-					enchKeys[count] = "enchantment." + e.getName().toLowerCase().replace("_", ".")
-						.replace("environmental", "all").replace("protection", "protect");
-					count++;
-				}
-			}
-		} else {
-			try {
-				matKey = queryMaterial(material);
-			} catch (Exception ex) {
-				Bukkit.getLogger().severe("[LocaleLib] Unable to query Material: " + material.name());
-				return false;
-			}
-			if (meta != null && meta instanceof PotionMeta) {
-                matKey = "item.minecraft.potion.effect." + ((PotionMeta)meta).getBasePotionData().getType().name().toLowerCase()
-                        .replace("regen", "regeneration").replace("speed", "swiftness").replace("jump", "leaping")
-                        .replace("instant_heal", "healing").replace("instant_damage", "harming");
-            }
-			if (enchantments != null && !enchantments.isEmpty()) {
-				int count = 0;
-				for (Enchantment e : enchantments.keySet()) {
-					enchKeys[count] = "enchantment.minecraft." + e.toString().toLowerCase();
-					count++;
-				}
-			}
+		try {
+			matKey = queryMaterial(material, durability, meta);
+		} catch (Exception ex) {
+			Bukkit.getLogger().severe("[LocaleLib] Unable to query Material: " + material.name());
+			return false;
 		}
+		
+		Collection<String> enchKeys = queryEnchantments(enchantments).values();
+		
 		String msg = message.replace("<item>", "\",{\"translate\":\"" + matKey + "\"},\"");
-		if (enchKeys != null && enchKeys.length > 0) {
-			for (String ek : enchKeys) {
-				msg.replaceFirst("<enchantment>", "\",{\"translate\":\"" + ek + "\"},\"");
-			}
+		for (String ek : enchKeys) {
+			msg.replaceFirst("<enchantment>", "\",{\"translate\":\"" + ek + "\"},\"");
 		}
 		Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + player.getName() + " [\"" + msg + "\"]");
 		return true;
@@ -166,35 +121,14 @@ public class LocaleManager{
 	 * @param message The message to be sent to the player
 	 * @param enchantments Enchantments for the item being translated
 	 */
-	@SuppressWarnings("deprecation")
 	public boolean sendMessage(Player player, String message, Map<Enchantment, Integer> enchantments) {
-		if (enchantments == null) {
+		if (player == null || message == null || enchantments == null) {
 			return false;
 		}
-		String[] enchKeys = enchantments != null ? new String[enchantments.size()] : null;
-		if (oldVersion) {
-			if (enchantments != null && !enchantments.isEmpty()) {
-				int count = 0;
-				for (Enchantment e : enchantments.keySet()) {
-					enchKeys[count] = "enchantment." + e.getName().toLowerCase().replace("_", ".")
-						.replace("environmental", "all").replace("protection", "protect");
-					count++;
-				}
-			}
-		} else {
-			if (enchantments != null && !enchantments.isEmpty()) {
-				int count = 0;
-				for (Enchantment e : enchantments.keySet()) {
-					enchKeys[count] = "enchantment.minecraft." + e.toString().toLowerCase();
-					count++;
-				}
-			}
-		}
+		Collection<String> enchKeys = queryEnchantments(enchantments).values();
 		String msg = message;
-		if (enchKeys != null && enchKeys.length > 0) {
-			for (String ek : enchKeys) {
-				msg.replaceFirst("<enchantment>", "\",{\"translate\":\"" + ek + "\"},\"");
-			}
+		for (String ek : enchKeys) {
+			msg.replaceFirst("<enchantment>", "\",{\"translate\":\"" + ek + "\"},\"");
 		}
 		Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + player.getName() + " [\"" + msg + "\"]");
 		return true;
@@ -213,7 +147,7 @@ public class LocaleManager{
 	 * @param extra Career, Ocelot, or Rabbit type if applicable
 	 */
 	public boolean sendMessage(Player player, String message, EntityType type, String extra) {
-		if (type == null ) {
+		if (player == null || message == null || type == null) {
 			return false;
 		}
 		String key = "";
@@ -248,21 +182,113 @@ public class LocaleManager{
 	 * @return the raw key
 	 * @throws IllegalArgumentException if an item with that material could not be found
 	 */
-	public String queryMaterial(Material material) throws IllegalArgumentException{
-	    try {
-	    	Object item = null;
-	    	Method m = craftMagicNumbers.getDeclaredMethod("getItem", material.getClass());
-	    	m.setAccessible(true);
-	    	item = m.invoke(craftMagicNumbers, material);
-	    	if (item == null) {
-	    		throw new IllegalArgumentException(material.name() + " material could not be queried!");
-	    	}                          
-	    	String name = (String) itemClazz.getMethod("getName").invoke(item);
-	    	return name;
-	    } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-	    	e.printStackTrace();
-	    }
-	    return null;
+	public String queryMaterial(Material material) throws IllegalArgumentException, NullArgumentException {
+	    return queryMaterial(material, (short) 0, null);
+	}
+	
+	/**
+	 * Gets the key name of the specified material as it would appear in a Minecraft lang file.
+	 * 
+	 * @param material the material to check
+	 * @param durability the material type to check
+	 * @return the raw key
+	 * @throws IllegalArgumentException if an item with that material and durability could not be found
+	 * @throws NullArgumentException if the specified material parameter is null
+	 */
+	public String queryMaterial(Material material, short durability, ItemMeta meta) throws IllegalArgumentException, NullArgumentException {
+		if (material == null) {
+			throw new NullArgumentException("material");
+		}
+		String matKey = "";
+		if (oldVersion) {
+			if (material.isBlock()) {
+				if (durability >= 0 && oldBlocks.containsKey(material.name() + "." + durability)) {
+					matKey = oldBlocks.get(material.name() + "." + durability);
+				} else if (oldBlocks.containsKey(material.name())) {
+					matKey = oldBlocks.get(material.name());
+				} else {
+					throw new IllegalArgumentException("[LocaleLib] Block not found: " + material.name() + "." + durability);
+				}
+			} else {
+				ItemStack i = new ItemStack(material, 1, durability);
+				if (durability >= 0 && i.getItemMeta() instanceof PotionMeta) {
+					if (hasBasePotionData) {
+						if (material.equals(Material.POTION)) {
+							matKey = oldPotions.get(((PotionMeta)i.getItemMeta()).getBasePotionData().getType().name());
+						} else if (material.equals(Material.LINGERING_POTION)) {
+							matKey = oldLingeringPotions.get(((PotionMeta)i.getItemMeta()).getBasePotionData().getType().name());
+						} else if (material.equals(Material.SPLASH_POTION)) {
+							matKey = oldSplashPotions.get(((PotionMeta)i.getItemMeta()).getBasePotionData().getType().name());
+						}
+					}
+				} else if (durability >= 0 && oldItems.containsKey(material.name() + "." + durability)) {
+					matKey = oldItems.get(material.name() + "." + durability);
+				} else if (oldItems.containsKey(material.name())) {
+					matKey = oldItems.get(material.name());
+				} else {
+					throw new IllegalArgumentException("[LocaleLib] Item not found: " + material.name() + "." + durability);
+				}
+			}
+		} else {
+			try {
+				Object item = null;
+		    	Method m = craftMagicNumbers.getDeclaredMethod("getItem", material.getClass());
+		    	m.setAccessible(true);
+		    	item = m.invoke(craftMagicNumbers, material);
+		    	if (item == null) {
+		    		throw new IllegalArgumentException(material.name() + " material could not be queried!");
+		    	}                          
+		    	matKey = (String) itemClazz.getMethod("getName").invoke(item);
+			} catch (Exception ex) {
+				throw new IllegalArgumentException("[LocaleLib] Unable to query Material: " + material.name());
+			}
+			if (meta != null && meta instanceof PotionMeta) {
+                matKey = "item.minecraft.potion.effect." + ((PotionMeta)meta).getBasePotionData().getType().name().toLowerCase()
+                        .replace("regen", "regeneration").replace("speed", "swiftness").replace("jump", "leaping")
+                        .replace("instant_heal", "healing").replace("instant_damage", "harming");
+            }
+		}
+        return matKey;
+	}
+	
+	/**
+	 * Gets the key name of the specified enchantments as it would appear in a Minecraft lang file.
+	 * 
+	 * @param enchantments Enchantments to get the keys of
+	 * @return the raw keys of the enchantments
+	 */
+	public Map<Enchantment, String> queryEnchantments(Map<Enchantment, Integer> enchantments) {
+		Map<Enchantment, String> enchKeys = new HashMap<Enchantment, String>();
+		if (enchantments == null || enchantments.isEmpty()) {
+			return enchKeys;
+		}
+		if (oldVersion) {
+			for (Enchantment e : enchantments.keySet()) {
+				enchKeys.put(e, "enchantment." + e.getName().toLowerCase().replace("_", ".")
+					.replace("environmental", "all").replace("protection", "protect"));
+			}
+		} else {
+			for (Enchantment e : enchantments.keySet()) {
+				enchKeys.put(e, "enchantment.minecraft." + e.toString().toLowerCase());
+			}
+		}
+		return enchKeys;
+	}
+	
+	/**
+	 * Gets the key name of the specified material as it would appear in a Minecraft lang file.
+	 * 
+	 * @param nameKey the key of the object name
+	 * @return the server locale's name of the nameKey
+	 */
+	public String toServerLocale(String nameKey) throws IllegalAccessException, InvocationTargetException {
+		Method trans = Arrays.stream(locale.getClass().getMethods())
+                .filter(m -> m.getReturnType().equals(String.class))
+                .filter(m -> m.getParameterCount() == 1)
+                .filter(m -> m.getParameters()[0].getType().equals(String.class))
+                .collect(Collectors.toList()).get(0);
+
+        return (String) trans.invoke(locale, nameKey.toString());
 	}
 	
 	/**
