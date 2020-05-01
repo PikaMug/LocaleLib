@@ -42,7 +42,7 @@
         <resources>
             <resource>
                 <targetPath>.</targetPath>
-                <directory>${basedir}/LocaleLib</directory>
+                <directory>${basedir}/src/main/resources/</directory>
                 <filtering>true</filtering>
                 <includes>
                     <include>plugin.yml</include>

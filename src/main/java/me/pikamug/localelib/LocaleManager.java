@@ -21,7 +21,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
 
-public class LocaleManager {
+import me.pikamug.localelib.LocaleKeys;
+
+public class LocaleManager{
 	private static Class<?> craftMagicNumbers = null;
 	private static Class<?> itemClazz = null;
 	private static Object locale;
