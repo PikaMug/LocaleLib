@@ -26,7 +26,7 @@ import me.pikamug.localelib.LocaleKeys;
 public class LocaleManager{
 	private static Class<?> craftMagicNumbers = null;
 	private static Class<?> itemClazz = null;
-	private static Object locale;
+	private static Class<?> localeClazz = null;
 	private static boolean oldVersion = false;
 	private static boolean hasBasePotionData = false;
 	private Map<String, String> oldBlocks = LocaleKeys.getBlockKeys();
@@ -44,11 +44,10 @@ public class LocaleManager{
 		}
 		String version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
 	    try {
-	    	Class<?> localeClass = Class.forName("net.minecraft.server.{v}.LocaleLanguage".replace("{v}", version));
-            locale = localeClass.newInstance();
 	        craftMagicNumbers = Class.forName("org.bukkit.craftbukkit.{v}.util.CraftMagicNumbers".replace("{v}", version));
 	        itemClazz = Class.forName("net.minecraft.server.{v}.Item".replace("{v}", version));
-	    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+	        localeClazz = Class.forName("net.minecraft.server.{v}.LocaleLanguage".replace("{v}", version));
+	    } catch (ClassNotFoundException e) {
 	        e.printStackTrace();
 	    }
 	}
@@ -284,13 +283,13 @@ public class LocaleManager{
 	 * @return the server locale's name of the nameKey
 	 */
 	public String toServerLocale(String nameKey) throws IllegalAccessException, InvocationTargetException {
-		Method trans = Arrays.stream(locale.getClass().getMethods())
+		Method trans = Arrays.stream(localeClazz.getMethods())
                 .filter(m -> m.getReturnType().equals(String.class))
                 .filter(m -> m.getParameterCount() == 1)
                 .filter(m -> m.getParameters()[0].getType().equals(String.class))
                 .collect(Collectors.toList()).get(0);
 
-        return (String) trans.invoke(locale, nameKey.toString());
+        return (String) trans.invoke(localeClazz, nameKey.toString());
 	}
 	
 	/**
