@@ -70,10 +70,9 @@ public class LocaleManager{
      * @param meta ItemMeta for the item being translated
      */
     public boolean sendMessage(Player player, String message, Material material, short durability, Map<Enchantment, Integer> enchantments, ItemMeta meta) {
-        if (material == null) {
+        if (player == null || material == null) {
             return false;
         }
-        
         String matKey = "";
         try {
             matKey = queryMaterial(material, durability, meta);
