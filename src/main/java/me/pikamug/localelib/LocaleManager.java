@@ -196,9 +196,10 @@ public class LocaleManager{
      * @throws IllegalArgumentException if an item with that material and durability could not be found
      * @throws NullArgumentException if the specified material parameter is null
      */
+    @SuppressWarnings("deprecation")
     public String queryMaterial(Material material, short durability, ItemMeta meta) throws IllegalArgumentException, NullArgumentException {
         if (material == null) {
-            throw new NullArgumentException("material");
+            throw new NullArgumentException("[LocaleLib] Material cannot be null");
         }
         String matKey = "";
         if (oldVersion) {
@@ -258,6 +259,7 @@ public class LocaleManager{
      * @param enchantments Enchantments to get the keys of
      * @return the raw keys of the enchantments
      */
+    @SuppressWarnings("deprecation")
     public Map<Enchantment, String> queryEnchantments(Map<Enchantment, Integer> enchantments) {
         Map<Enchantment, String> enchKeys = new HashMap<Enchantment, String>();
         if (enchantments == null || enchantments.isEmpty()) {
