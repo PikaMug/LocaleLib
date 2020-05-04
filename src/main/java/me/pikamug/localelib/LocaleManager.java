@@ -278,10 +278,10 @@ public class LocaleManager{
     }
     
     /**
-     * Gets the key name of the specified material as it would appear in a Minecraft lang file.
+     * Gets the display name of the specified material as it would appear in a Minecraft lang file.
      * 
-     * @param nameKey the key of the object name
-     * @return the server locale's name of the nameKey
+     * @param key the raw key for the object name
+     * @return the display name of the specified key within the server locale file
      */
     public String toServerLocale(String nameKey) throws IllegalAccessException, InvocationTargetException {
         Method trans = Arrays.stream(localeClazz.getMethods())
