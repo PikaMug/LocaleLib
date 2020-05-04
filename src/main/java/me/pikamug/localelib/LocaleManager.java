@@ -283,14 +283,14 @@ public class LocaleManager{
      * @param key the raw key for the object name
      * @return the display name of the specified key within the server locale file
      */
-    public String toServerLocale(String nameKey) throws IllegalAccessException, InvocationTargetException {
+    public String toServerLocale(String key) throws IllegalAccessException, InvocationTargetException {
         Method trans = Arrays.stream(localeClazz.getMethods())
                 .filter(m -> m.getReturnType().equals(String.class))
                 .filter(m -> m.getParameterCount() == 1)
                 .filter(m -> m.getParameters()[0].getType().equals(String.class))
                 .collect(Collectors.toList()).get(0);
 
-        return (String) trans.invoke(localeClazz, nameKey.toString());
+        return (String) trans.invoke(localeClazz, key);
     }
     
     /**
