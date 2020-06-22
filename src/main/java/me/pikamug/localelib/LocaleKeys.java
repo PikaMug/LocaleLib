@@ -326,7 +326,7 @@ public class LocaleKeys {
         keys.put("ENDER_CHEST", "tile.enderChest.name");
         keys.put("EMERALD_ORE", "tile.oreEmerald.name");
         keys.put("EMERLAND_BLOCK", "tile.blockEmerald.name");
-        keys.put("REDSTONE_ORE", "tile.blockRedstone.name");
+        keys.put("REDSTONE_BLOCK", "tile.blockRedstone.name");
         keys.put("TRIPWARE", "tile.tripWire.name");
         keys.put("TRIPWIRE_HOOK", "tile.tripWireSource.name");
         keys.put("COMMAND", "tile.commandBlock.name");
@@ -451,7 +451,7 @@ public class LocaleKeys {
         keys.put("DIODE_BLOCK_OFF", "item.diode.name"); // added
         keys.put("DIODE_BLOCK_ON", "item.diode.name"); // added
         keys.put("REDSTONE_COMPARATOR_OFF", "item.comparator.name"); // added
-        keys.put("REDSTONE_COMPARATOR_OFF", "item.comparator.name"); // added
+        keys.put("REDSTONE_COMPARATOR_ON", "item.comparator.name"); // added
         keys.put("SKULL.0", "item.skull.skeleton.name"); // added
         keys.put("SKULL.1", "item.skull.wither.name"); // added
         keys.put("SKULL.2", "item.skull.zombie.name"); // added
