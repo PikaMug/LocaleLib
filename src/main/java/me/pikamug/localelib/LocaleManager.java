@@ -21,20 +21,18 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
 
-import me.pikamug.localelib.LocaleKeys;
-
 public class LocaleManager{
     private static Class<?> craftMagicNumbers = null;
     private static Class<?> itemClazz = null;
     private static Class<?> localeClazz = null;
     private static boolean oldVersion = false;
     private static boolean hasBasePotionData = false;
-    private Map<String, String> oldBlocks = LocaleKeys.getBlockKeys();
-    private Map<String, String> oldItems = LocaleKeys.getItemKeys();
-    private Map<String, String> oldPotions = LocaleKeys.getPotionKeys();
-    private Map<String, String> oldLingeringPotions = LocaleKeys.getLingeringPotionKeys();
-    private Map<String, String> oldSplashPotions = LocaleKeys.getSplashPotionKeys();
-    private Map<String, String> oldEntities = LocaleKeys.getEntityKeys();
+    private final Map<String, String> oldBlocks = LocaleKeys.getBlockKeys();
+    private final Map<String, String> oldItems = LocaleKeys.getItemKeys();
+    private final Map<String, String> oldPotions = LocaleKeys.getPotionKeys();
+    private final Map<String, String> oldLingeringPotions = LocaleKeys.getLingeringPotionKeys();
+    private final Map<String, String> oldSplashPotions = LocaleKeys.getSplashPotionKeys();
+    private final Map<String, String> oldEntities = LocaleKeys.getEntityKeys();
     
     public LocaleManager() {
         oldVersion = isBelow113();
@@ -42,12 +40,12 @@ public class LocaleManager{
             // Bukkit version is 1.9+
             hasBasePotionData = true;
         }
-        String version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
+        final String version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
         try {
             craftMagicNumbers = Class.forName("org.bukkit.craftbukkit.{v}.util.CraftMagicNumbers".replace("{v}", version));
             itemClazz = Class.forName("net.minecraft.server.{v}.Item".replace("{v}", version));
             localeClazz = Class.forName("net.minecraft.server.{v}.LocaleLanguage".replace("{v}", version));
-        } catch (ClassNotFoundException e) {
+        } catch (final ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
@@ -60,7 +58,8 @@ public class LocaleManager{
      * but note that most Potions use meta for 1.13+.<p>
      * 
      * Message should contain {@code <item>} string for replacement by
-     * this method (along with applicable {@code <enchantment>} strings).
+     * this method (along with applicable {@code <enchantment>} and/or 
+     * {@code <level>} strings).
      * 
      * @param player The player whom the message is to be sent to
      * @param message The message to be sent to the player
@@ -69,23 +68,25 @@ public class LocaleManager{
      * @param enchantments Enchantments for the item being translated
      * @param meta ItemMeta for the item being translated
      */
-    public boolean sendMessage(Player player, String message, Material material, short durability, Map<Enchantment, Integer> enchantments, ItemMeta meta) {
+    public boolean sendMessage(final Player player, final String message, final Material material, final short durability, final Map<Enchantment, Integer> enchantments, final ItemMeta meta) {
         if (player == null || material == null) {
             return false;
         }
         String matKey = "";
         try {
             matKey = queryMaterial(material, durability, meta);
-        } catch (Exception ex) {
+        } catch (final Exception ex) {
             Bukkit.getLogger().severe("[LocaleLib] Unable to query Material: " + material.name());
             return false;
         }
-        
-        Collection<String> enchKeys = queryEnchantments(enchantments).values();
-        
+        final Collection<String> enchKeys = queryEnchantments(enchantments).values();
+        final Collection<String> lvlKeys = queryLevels(enchantments).values();
         String msg = message.replace("<item>", "\",{\"translate\":\"" + matKey + "\"},\"");
-        for (String ek : enchKeys) {
-            msg.replaceFirst("<enchantment>", "\",{\"translate\":\"" + ek + "\"},\"");
+        for (final String ek : enchKeys) {
+            msg = msg.replaceFirst("<enchantment>", "\",{\"translate\":\"" + ek + "\"},\"");
+        }
+        for (final String lk : lvlKeys) {
+            msg = msg.replaceFirst("<level>", "\",{\"translate\":\"" + lk + "\"},\"");
         }
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + player.getName() + " [\"" + msg + "\"]");
         return true;
@@ -98,7 +99,8 @@ public class LocaleManager{
      * Enchantments are optional and may be left null or empty.<p>
      * 
      * Message should contain {@code <item>} string for replacement by
-     * this method (along with applicable {@code <enchantment>} strings).
+     * this method (along with applicable {@code <enchantment>} and/or 
+     * {@code <level>} strings).
      * 
      * @param player The player whom the message is to be sent to
      * @param message The message to be sent to the player
@@ -106,7 +108,7 @@ public class LocaleManager{
      * @param durability Durability for the item being translated
      * @param enchantments Enchantments for the item being translated
      */
-    public boolean sendMessage(Player player, String message, Material material, short durability, Map<Enchantment, Integer> enchantments) {
+    public boolean sendMessage(final Player player, final String message, final Material material, final short durability, final Map<Enchantment, Integer> enchantments) {
         return sendMessage(player, message, material, durability, enchantments, null);
     }
     
@@ -114,21 +116,28 @@ public class LocaleManager{
      * Send message with enchantments translated to the client's locale.
      * Map of Enchantment+level is required.
      * 
-     * Message should contain one {@code <enchantment>} string for each
-     * replacement by this method.
+     * Message should contain {@code <item>} string for replacement by
+     * this method (along with applicable {@code <enchantment>} and/or 
+     * {@code <level>} strings).
      * 
      * @param player The player whom the message is to be sent to
      * @param message The message to be sent to the player
      * @param enchantments Enchantments for the item being translated
      */
-    public boolean sendMessage(Player player, String message, Map<Enchantment, Integer> enchantments) {
+    public boolean sendMessage(final Player player, final String message, final Map<Enchantment, Integer> enchantments) {
         if (player == null || message == null || enchantments == null) {
             return false;
         }
-        Collection<String> enchKeys = queryEnchantments(enchantments).values();
-        String msg = message;
-        for (String ek : enchKeys) {
-            msg.replaceFirst("<enchantment>", "\",{\"translate\":\"" + ek + "\"},\"");
+        final Collection<String> enchKeys = queryEnchantments(enchantments).values();
+        final Collection<String> lvlKeys = queryLevels(enchantments).values();
+        final String msg = message;
+        if (enchKeys != null && !enchKeys.isEmpty()) {
+            for (final String ek : enchKeys) {
+                msg.replaceFirst("<enchantment>", "\",{\"translate\":\"" + ek + "\"},\"");
+            }
+            for (final String lk : lvlKeys) {
+                msg.replaceFirst("<level>", "\",{\"translate\":\"" + lk + "\"},\"");
+            }
         }
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + player.getName() + " [\"" + msg + "\"]");
         return true;
@@ -138,15 +147,15 @@ public class LocaleManager{
      * Send message with entity name translated to the client's locale.
      * EntityType is required.<p>
      * 
-     * Message should contain {@code <mob>}
-     * string for replacement by this method.
+     * Message should contain {@code <mob>}string for replacement by 
+     * this method.
      * 
      * @param player The player whom the message is to be sent to
      * @param message The message to be sent to the player
      * @param type The entity type to be translated
      * @param extra Career, Ocelot, or Rabbit type if applicable
      */
-    public boolean sendMessage(Player player, String message, EntityType type, String extra) {
+    public boolean sendMessage(final Player player, final String message, final EntityType type, final String extra) {
         if (player == null || message == null || type == null) {
             return false;
         }
@@ -169,7 +178,7 @@ public class LocaleManager{
                 key = "entity.minecraft." + type.toString().toLowerCase();
             }
         }
-        String msg = message.replace("<mob>", "\",{\"translate\":\"" + key + "\"},\"");
+        final String msg = message.replace("<mob>", "\",{\"translate\":\"" + key + "\"},\"");
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + player.getName() + " [\"" + msg + "\"]");
         return true;
     }
@@ -181,7 +190,7 @@ public class LocaleManager{
      * @return the raw key
      * @throws IllegalArgumentException if an item with that material could not be found
      */
-    public String queryMaterial(Material material) throws IllegalArgumentException, NullArgumentException {
+    public String queryMaterial(final Material material) throws IllegalArgumentException, NullArgumentException {
         return queryMaterial(material, (short) 0, null);
     }
     
@@ -195,7 +204,7 @@ public class LocaleManager{
      * @throws NullArgumentException if the specified material parameter is null
      */
     @SuppressWarnings("deprecation")
-    public String queryMaterial(Material material, short durability, ItemMeta meta) throws IllegalArgumentException, NullArgumentException {
+    public String queryMaterial(final Material material, final short durability, final ItemMeta meta) throws IllegalArgumentException, NullArgumentException {
         if (material == null) {
             throw new NullArgumentException("[LocaleLib] Material cannot be null");
         }
@@ -210,7 +219,7 @@ public class LocaleManager{
                     throw new IllegalArgumentException("[LocaleLib] Block not found: " + material.name() + "." + durability);
                 }
             } else {
-                ItemStack i = new ItemStack(material, 1, durability);
+                final ItemStack i = new ItemStack(material, 1, durability);
                 if (durability >= 0 && i.getItemMeta() instanceof PotionMeta) {
                     if (hasBasePotionData) {
                         if (material.equals(Material.POTION)) {
@@ -231,15 +240,14 @@ public class LocaleManager{
             }
         } else {
             try {
-                Object item = null;
-                Method m = craftMagicNumbers.getDeclaredMethod("getItem", material.getClass());
+                final Method m = craftMagicNumbers.getDeclaredMethod("getItem", material.getClass());
                 m.setAccessible(true);
-                item = m.invoke(craftMagicNumbers, material);
+                final Object item = m.invoke(craftMagicNumbers, material);
                 if (item == null) {
                     throw new IllegalArgumentException(material.name() + " material could not be queried!");
                 }                          
                 matKey = (String) itemClazz.getMethod("getName").invoke(item);
-            } catch (Exception ex) {
+            } catch (final Exception ex) {
                 throw new IllegalArgumentException("[LocaleLib] Unable to query Material: " + material.name());
             }
             if (meta != null && meta instanceof PotionMeta) {
@@ -258,22 +266,39 @@ public class LocaleManager{
      * @return the raw keys of the enchantments
      */
     @SuppressWarnings("deprecation")
-    public Map<Enchantment, String> queryEnchantments(Map<Enchantment, Integer> enchantments) {
-        Map<Enchantment, String> enchKeys = new HashMap<Enchantment, String>();
+    public Map<Enchantment, String> queryEnchantments(final Map<Enchantment, Integer> enchantments) {
+        final Map<Enchantment, String> enchKeys = new HashMap<Enchantment, String>();
         if (enchantments == null || enchantments.isEmpty()) {
             return enchKeys;
         }
         if (oldVersion) {
-            for (Enchantment e : enchantments.keySet()) {
+            for (final Enchantment e : enchantments.keySet()) {
                 enchKeys.put(e, "enchantment." + e.getName().toLowerCase().replace("_", ".")
                     .replace("environmental", "all").replace("protection", "protect"));
             }
         } else {
-            for (Enchantment e : enchantments.keySet()) {
+            for (final Enchantment e : enchantments.keySet()) {
                 enchKeys.put(e, "enchantment.minecraft." + e.toString().toLowerCase());
             }
         }
         return enchKeys;
+    }
+    
+    /**
+     * Gets the key name of the specified enchantment levels as it would appear in a Minecraft lang file.
+     * 
+     * @param enchantments Enchantment levels to get the keys of
+     * @return the raw keys of the enchantment levels
+     */
+    public Map<Integer, String> queryLevels(final Map<Enchantment, Integer> enchantments) {
+        final Map<Integer, String> lvlKeys = new HashMap<Integer, String>();
+        if (enchantments == null || enchantments.isEmpty()) {
+            return lvlKeys;
+        }
+        for (final Integer i : enchantments.values()) {
+            lvlKeys.put(i, "enchantment.level." + i);
+        }
+        return lvlKeys;
     }
     
     /**
@@ -282,8 +307,8 @@ public class LocaleManager{
      * @param key the raw key for the object name
      * @return the display name of the specified key within the server locale file
      */
-    public String toServerLocale(String key) throws IllegalAccessException, InvocationTargetException {
-        Method trans = Arrays.stream(localeClazz.getMethods())
+    public String toServerLocale(final String key) throws IllegalAccessException, InvocationTargetException {
+        final Method trans = Arrays.stream(localeClazz.getMethods())
                 .filter(m -> m.getReturnType().equals(String.class))
                 .filter(m -> m.getParameterCount() == 1)
                 .filter(m -> m.getParameters()[0].getType().equals(String.class))
@@ -310,7 +335,7 @@ public class LocaleManager{
         return _isBelow113(Bukkit.getServer().getBukkitVersion().split("-")[0]);
     }
     
-    private boolean _isBelow113(String bukkitVersion) {
+    private boolean _isBelow113(final String bukkitVersion) {
         if (bukkitVersion.matches("^[0-9.]+$")) {
             switch(bukkitVersion) {
             case "1.12.2" :
