@@ -68,7 +68,8 @@ public class LocaleManager{
      * @param enchantments Enchantments for the item being translated
      * @param meta ItemMeta for the item being translated
      */
-    public boolean sendMessage(final Player player, final String message, final Material material, final short durability, final Map<Enchantment, Integer> enchantments, final ItemMeta meta) {
+    public boolean sendMessage(final Player player, final String message, final Material material, final short durability, 
+           final Map<Enchantment, Integer> enchantments, final ItemMeta meta) {
         if (player == null || material == null) {
             return false;
         }
@@ -108,7 +109,8 @@ public class LocaleManager{
      * @param durability Durability for the item being translated
      * @param enchantments Enchantments for the item being translated
      */
-    public boolean sendMessage(final Player player, final String message, final Material material, final short durability, final Map<Enchantment, Integer> enchantments) {
+    public boolean sendMessage(final Player player, final String message, final Material material, final short durability,
+            final Map<Enchantment, Integer> enchantments) {
         return sendMessage(player, message, material, durability, enchantments, null);
     }
     
@@ -204,7 +206,8 @@ public class LocaleManager{
      * @throws NullArgumentException if the specified material parameter is null
      */
     @SuppressWarnings("deprecation")
-    public String queryMaterial(final Material material, final short durability, final ItemMeta meta) throws IllegalArgumentException, NullArgumentException {
+    public String queryMaterial(final Material material, final short durability, final ItemMeta meta)
+            throws IllegalArgumentException, NullArgumentException {
         if (material == null) {
             throw new NullArgumentException("[LocaleLib] Material cannot be null");
         }
@@ -247,13 +250,13 @@ public class LocaleManager{
                     throw new IllegalArgumentException(material.name() + " material could not be queried!");
                 }                          
                 matKey = (String) itemClazz.getMethod("getName").invoke(item);
+                if (meta != null && meta instanceof PotionMeta) {
+                    matKey += ".effect." + ((PotionMeta)meta).getBasePotionData().getType().name().toLowerCase()
+                            .replace("regen", "regeneration").replace("speed", "swiftness").replace("jump", "leaping")
+                            .replace("instant_heal", "healing").replace("instant_damage", "harming");
+                }
             } catch (final Exception ex) {
                 throw new IllegalArgumentException("[LocaleLib] Unable to query Material: " + material.name());
-            }
-            if (meta != null && meta instanceof PotionMeta) {
-                matKey = "item.minecraft.potion.effect." + ((PotionMeta)meta).getBasePotionData().getType().name().toLowerCase()
-                        .replace("regen", "regeneration").replace("speed", "swiftness").replace("jump", "leaping")
-                        .replace("instant_heal", "healing").replace("instant_damage", "harming");
             }
         }
         return matKey;
