@@ -163,8 +163,12 @@ public class LocaleManager{
         }
         String key = "";
         if (oldVersion) {
-            if (type.name().equals("VILLAGER") && Profession.valueOf(extra) != null) {
-                key = oldEntities.get(type.name() + "." + Profession.valueOf(extra).name());
+            if (type.name().equals("VILLAGER")) {
+                if (extra != null && Profession.valueOf(extra) != null) {
+                    key = oldEntities.get(type.name() + "." + Profession.valueOf(extra).name());
+                } else {
+                    key = oldEntities.get(type.name());
+                }
             } else if (type.name().equals("OCELOT") && Ocelot.Type.valueOf(extra) != null) {
                 key = oldEntities.get(type.name() + "." + Ocelot.Type.valueOf(extra).name());
             } else if (type.name().equals("RABBIT") && Rabbit.Type.valueOf(extra) != null 
