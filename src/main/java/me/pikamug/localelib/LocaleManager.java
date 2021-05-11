@@ -90,7 +90,6 @@ public class LocaleManager{
         for (final String lk : lvlKeys) {
             msg = msg.replaceFirst("<level>",  translate(msg, lk, "<level>"));
         }
-        System.out.println("tellraw " + player.getName() + " [\"" + msg + "\"]");
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + player.getName() + " [\"" + msg + "\"]");
         return true;
     }
@@ -335,12 +334,11 @@ public class LocaleManager{
      * @return the text to replace the placeholder in the message
      */
     private String translate(String message, String key, String placeholder){
-
         String replacement = "\",{\"translate\":\"" + key + "\"";
         // Get the text before the placeholder
         String text = message.split(placeholder)[0];
         // If the text before the placeholder uses any color code
-        if(text.contains("§")){
+        if (text.contains("§")) {
             // Get the color code that apply on the text and remove §, so we can get the color name later
             String colorCode = ChatColor.getLastColors(text).replace("§", "");
             // Get the color name
@@ -349,7 +347,6 @@ public class LocaleManager{
             // Add the color
             replacement += ", \"color\":\"" + colorName.toLowerCase() + "\"";
         }
-
         replacement += "},\"";
 
         return replacement;
