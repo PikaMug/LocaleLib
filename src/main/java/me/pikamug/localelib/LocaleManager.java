@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang.NullArgumentException;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.EntityType;
@@ -82,13 +83,14 @@ public class LocaleManager{
         }
         final Collection<String> enchKeys = queryEnchantments(enchantments).values();
         final Collection<String> lvlKeys = queryLevels(enchantments).values();
-        String msg = message.replace("<item>", "\",{\"translate\":\"" + matKey + "\"},\"");
+        String msg = message.replace("<item>", translate(message, matKey, "<item>"));
         for (final String ek : enchKeys) {
-            msg = msg.replaceFirst("<enchantment>", "\",{\"translate\":\"" + ek + "\"},\"");
+            msg = msg.replaceFirst("<enchantment>", translate(msg, ek, "<enchantment>"));
         }
         for (final String lk : lvlKeys) {
-            msg = msg.replaceFirst("<level>", "\",{\"translate\":\"" + lk + "\"},\"");
+            msg = msg.replaceFirst("<level>",  translate(msg, lk, "<level>"));
         }
+        System.out.println("tellraw " + player.getName() + " [\"" + msg + "\"]");
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + player.getName() + " [\"" + msg + "\"]");
         return true;
     }
@@ -135,10 +137,10 @@ public class LocaleManager{
         final String msg = message;
         if (enchKeys != null && !enchKeys.isEmpty()) {
             for (final String ek : enchKeys) {
-                msg.replaceFirst("<enchantment>", "\",{\"translate\":\"" + ek + "\"},\"");
+                msg.replaceFirst("<enchantment>", translate(msg, ek, "<enchantment>"));
             }
             for (final String lk : lvlKeys) {
-                msg.replaceFirst("<level>", "\",{\"translate\":\"" + lk + "\"},\"");
+                msg.replaceFirst("<level>",  translate(msg, lk, "<level>"));
             }
         }
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + player.getName() + " [\"" + msg + "\"]");
@@ -184,7 +186,7 @@ public class LocaleManager{
                 key = "entity.minecraft." + type.toString().toLowerCase();
             }
         }
-        final String msg = message.replace("<mob>", "\",{\"translate\":\"" + key + "\"},\"");
+        final String msg = message.replace("<mob>", translate(message, key, "<mob>"));
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + player.getName() + " [\"" + msg + "\"]");
         return true;
     }
@@ -323,7 +325,34 @@ public class LocaleManager{
 
         return (String) trans.invoke(localeClazz, key);
     }
-    
+
+
+    /**
+     *
+     * @param message The message to be sent to the player
+     * @param key the raw keys of the enchantments
+     * @param placeholder <item>, <enchantment>, <level> and <mob>
+     * @return the text to replace the placeholder in the message
+     */
+    private String translate(String message, String key, String placeholder){
+        // If the message contains color code
+        String replacement = "\",{\"translate\":\"" + key + "\"";
+        if(message.contains("§")){
+            // Get the text before the placeholder
+            String text = message.split(placeholder)[0];
+            // remove the §
+            String colorCode = ChatColor.getLastColors(text).replace("§", "");
+            String colorName = ChatColor.getByChar(colorCode).name();
+
+            replacement += ", \"color\":\"" + colorName.toLowerCase() + "\"";
+
+        }
+
+        replacement += "},\"";
+
+        return replacement;
+    }
+
     /**
      * Checks whether the server's Bukkit version supports use of the ItemMeta#getBasePotionData method.
      * 
