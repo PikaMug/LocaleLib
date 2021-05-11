@@ -335,17 +335,19 @@ public class LocaleManager{
      * @return the text to replace the placeholder in the message
      */
     private String translate(String message, String key, String placeholder){
-        // If the message contains color code
+
         String replacement = "\",{\"translate\":\"" + key + "\"";
-        if(message.contains("§")){
-            // Get the text before the placeholder
-            String text = message.split(placeholder)[0];
-            // remove the §
+        // Get the text before the placeholder
+        String text = message.split(placeholder)[0];
+        // If the text before the placeholder uses any color code
+        if(text.contains("§")){
+            // Get the color code that apply on the text and remove §, so we can get the color name later
             String colorCode = ChatColor.getLastColors(text).replace("§", "");
+            // Get the color name
             String colorName = ChatColor.getByChar(colorCode).name();
 
+            // Add the color
             replacement += ", \"color\":\"" + colorName.toLowerCase() + "\"";
-
         }
 
         replacement += "},\"";
