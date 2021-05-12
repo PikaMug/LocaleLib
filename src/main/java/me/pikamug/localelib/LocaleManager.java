@@ -17,6 +17,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Ocelot;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Rabbit;
+import org.bukkit.entity.TropicalFish;
 import org.bukkit.entity.Villager.Profession;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -156,7 +157,7 @@ public class LocaleManager{
      * @param player The player whom the message is to be sent to
      * @param message The message to be sent to the player
      * @param type The entity type to be translated
-     * @param extra Career, Ocelot, or Rabbit type if applicable
+     * @param extra Career, Ocelot, Rabbit, or TropicalFish type if applicable
      */
     public boolean sendMessage(final Player player, final String message, final EntityType type, final String extra) {
         if (player == null || message == null || type == null) {
@@ -164,15 +165,11 @@ public class LocaleManager{
         }
         String key = "";
         if (oldVersion) {
-            if (type.name().equals("VILLAGER")) {
-                if (extra != null && Profession.valueOf(extra) != null) {
+            if (type.name().equals("VILLAGER") && extra != null && Profession.valueOf(extra) != null) {
                     key = oldEntities.get(type.name() + "." + Profession.valueOf(extra).name());
-                } else {
-                    key = oldEntities.get(type.name());
-                }
-            } else if (type.name().equals("OCELOT") && Ocelot.Type.valueOf(extra) != null) {
+            } else if (type.name().equals("OCELOT") && extra != null && Ocelot.Type.valueOf(extra) != null) {
                 key = oldEntities.get(type.name() + "." + Ocelot.Type.valueOf(extra).name());
-            } else if (type.name().equals("RABBIT") && Rabbit.Type.valueOf(extra) != null 
+            } else if (type.name().equals("RABBIT") && extra != null && Rabbit.Type.valueOf(extra) != null 
                     && Rabbit.Type.valueOf(extra).equals(Rabbit.Type.THE_KILLER_BUNNY)) {
                 key = oldEntities.get(type.name() + "." + Rabbit.Type.valueOf(extra).name());
             } else {
@@ -181,6 +178,24 @@ public class LocaleManager{
         } else {
             if (type.name().equals("PIG_ZOMBIE")) {
                 key = "entity.minecraft.zombie_pigman";
+            } else if (type.name().equals("VILLAGER") && extra != null && Profession.valueOf(extra) != null) {
+                key = "entity.minecraft.villager." + Profession.valueOf(extra).name();
+            } else if (type.name().equals("RABBIT") && extra != null && Rabbit.Type.valueOf(extra) != null 
+                    && Rabbit.Type.valueOf(extra).equals(Rabbit.Type.THE_KILLER_BUNNY)) {
+                key = "entity.minecraft.killer_bunny";
+            } else if (type.name().equals("TROPICAL_FISH") && extra != null) {
+                if (TropicalFish.Pattern.valueOf(extra) != null) {
+                    key = "entity.minecraft.tropical_fish.type." + TropicalFish.Pattern.valueOf(extra);
+                } else {
+                    try {
+                        int value = Integer.valueOf(extra);
+                        if (value >= 0 && value < 22) {
+                            key = "entity.minecraft.tropical_fish.predefined." + extra;
+                        }
+                    } catch (NumberFormatException nfe) {
+                        // Do nothing
+                    }
+                }
             } else {
                 key = "entity.minecraft." + type.toString().toLowerCase();
             }
