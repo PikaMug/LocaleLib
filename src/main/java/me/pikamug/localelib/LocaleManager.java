@@ -1,3 +1,27 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2019 PikaMug
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 package me.pikamug.localelib;
 
 import java.lang.reflect.InvocationTargetException;
@@ -29,6 +53,7 @@ public class LocaleManager{
     private static Class<?> localeClazz = null;
     private static boolean oldVersion = false;
     private static boolean hasBasePotionData = false;
+    private static boolean hasRepackagedNms = false;
     private final Map<String, String> oldBlocks = LocaleKeys.getBlockKeys();
     private final Map<String, String> oldItems = LocaleKeys.getItemKeys();
     private final Map<String, String> oldPotions = LocaleKeys.getPotionKeys();
@@ -42,11 +67,20 @@ public class LocaleManager{
             // Bukkit version is 1.9+
             hasBasePotionData = true;
         }
+        if (Material.getMaterial("AMETHYST_CLUSTER") != null) {
+            // Bukkit version is 1.17+
+            hasRepackagedNms = true;
+        }
         final String version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
         try {
             craftMagicNumbers = Class.forName("org.bukkit.craftbukkit.{v}.util.CraftMagicNumbers".replace("{v}", version));
-            itemClazz = Class.forName("net.minecraft.server.{v}.Item".replace("{v}", version));
-            localeClazz = Class.forName("net.minecraft.server.{v}.LocaleLanguage".replace("{v}", version));
+            if (hasRepackagedNms) {
+                itemClazz = Class.forName("net.minecraft.world.item.Item");
+                localeClazz = Class.forName("net.minecraft.locale.LocaleLanguage");
+            } else {
+                itemClazz = Class.forName("net.minecraft.server.{v}.Item".replace("{v}", version));
+                localeClazz = Class.forName("net.minecraft.server.{v}.LocaleLanguage".replace("{v}", version));
+            }
         } catch (final ClassNotFoundException e) {
             e.printStackTrace();
         }
@@ -356,11 +390,13 @@ public class LocaleManager{
         if (text.contains("§")) {
             // Get the color code that apply on the text and remove §, so we can get the color name later
             String colorCode = ChatColor.getLastColors(text).replace("§", "");
-            // Get the color name
-            String colorName = ChatColor.getByChar(colorCode).name();
+            if (ChatColor.getByChar(colorCode) != null) {
+                // Get the color name
+                String colorName = ChatColor.getByChar(colorCode).name();
 
-            // Add the color
-            replacement += ", \"color\":\"" + colorName.toLowerCase() + "\"";
+                // Add the color
+                replacement += ", \"color\":\"" + colorName.toLowerCase() + "\"";
+            }
         }
         replacement += "},\"";
 
@@ -374,6 +410,15 @@ public class LocaleManager{
      */
     public boolean hasBasePotionData() {
         return hasBasePotionData;
+    }
+
+    /**
+     * Checks whether the server's Bukkit version uses the post-1.16.5 package scheme.
+     *
+     * @return true if Bukkit version is at 1.17 or above
+     */
+    public boolean hasRepackagedNms() {
+        return hasRepackagedNms;
     }
     
     /**
