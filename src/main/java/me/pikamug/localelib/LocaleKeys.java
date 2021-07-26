@@ -275,8 +275,8 @@ public class LocaleKeys {
         keys.put("WOOL.2", "tile.cloth.magenta.name");
         keys.put("WOOL.1", "tile.cloth.orange.name");
         keys.put("WOOL.0", "tile.cloth.white.name");
-        keys.put("LAPIS_BLOCK", "tile.oreLapis.name");
-        keys.put("LAPIS_ORE", "tile.blockLapis.name");
+        keys.put("LAPIS_ORE", "tile.oreLapis.name");
+        keys.put("LAPIS_BLOCK", "tile.blockLapis.name");
         keys.put("DISPENSER", "tile.dispenser.name");
         keys.put("DROPPER", "tile.dropper.name");
         keys.put("NOTE_BLOCK", "tile.musicBlock.name");
