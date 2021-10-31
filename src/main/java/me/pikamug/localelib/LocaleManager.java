@@ -110,7 +110,7 @@ public class LocaleManager{
         if (player == null || material == null) {
             return false;
         }
-        String matKey = "";
+        String matKey;
         try {
             matKey = queryMaterial(material, durability, meta);
         } catch (final Exception ex) {
@@ -120,10 +120,10 @@ public class LocaleManager{
         if (meta instanceof EnchantmentStorageMeta) {
             enchantments = ((EnchantmentStorageMeta)meta).getStoredEnchants();
         }
-        final Collection<String> enchKeys = queryEnchantments(enchantments).values();
+        final Collection<String> enchantKeys = queryEnchantments(enchantments).values();
         final Collection<String> lvlKeys = queryLevels(enchantments).values();
         String msg = message.replace("<item>", translate(message, matKey, "<item>"));
-        for (final String ek : enchKeys) {
+        for (final String ek : enchantKeys) {
             msg = msg.replaceFirst("<enchantment>", translate(msg, ek, "<enchantment>"));
         }
         for (final String lk : lvlKeys) {
@@ -170,18 +170,17 @@ public class LocaleManager{
         if (player == null || message == null || enchantments == null) {
             return false;
         }
-        final Collection<String> enchKeys = queryEnchantments(enchantments).values();
-        final Collection<String> lvlKeys = queryLevels(enchantments).values();
-        final String msg = message;
-        if (enchKeys != null && !enchKeys.isEmpty()) {
-            for (final String ek : enchKeys) {
-                msg.replaceFirst("<enchantment>", translate(msg, ek, "<enchantment>"));
+        final Collection<String> enchantKeys = queryEnchantments(enchantments).values();
+        final Collection<String> levelKeys = queryLevels(enchantments).values();
+        if (!enchantKeys.isEmpty()) {
+            for (final String ek : enchantKeys) {
+                message.replaceFirst("<enchantment>", translate(message, ek, "<enchantment>"));
             }
-            for (final String lk : lvlKeys) {
-                msg.replaceFirst("<level>",  translate(msg, lk, "<level>"));
+            for (final String lk : levelKeys) {
+                message.replaceFirst("<level>",  translate(message, lk, "<level>"));
             }
         }
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + player.getName() + " [\"" + msg + "\"]");
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + player.getName() + " [\"" + message + "\"]");
         return true;
     }
     
@@ -226,7 +225,7 @@ public class LocaleManager{
                     key = "entity.minecraft.tropical_fish.type." + TropicalFish.Pattern.valueOf(extra);
                 } else {
                     try {
-                        int value = Integer.valueOf(extra);
+                        int value = Integer.parseInt(extra);
                         if (value >= 0 && value < 22) {
                             key = "entity.minecraft.tropical_fish.predefined." + extra;
                         }
@@ -308,7 +307,7 @@ public class LocaleManager{
                     throw new IllegalArgumentException(material.name() + " material could not be queried!");
                 }                          
                 matKey = (String) itemClazz.getMethod("getName").invoke(item);
-                if (meta != null && meta instanceof PotionMeta) {
+                if (meta instanceof PotionMeta) {
                     matKey += ".effect." + ((PotionMeta)meta).getBasePotionData().getType().name().toLowerCase()
                             .replace("regen", "regeneration").replace("speed", "swiftness").replace("jump", "leaping")
                             .replace("instant_heal", "healing").replace("instant_damage", "harming");
@@ -328,21 +327,21 @@ public class LocaleManager{
      */
     @SuppressWarnings("deprecation")
     public Map<Enchantment, String> queryEnchantments(final Map<Enchantment, Integer> enchantments) {
-        final Map<Enchantment, String> enchKeys = new HashMap<Enchantment, String>();
+        final Map<Enchantment, String> enchantKeys = new HashMap<>();
         if (enchantments == null || enchantments.isEmpty()) {
-            return enchKeys;
+            return enchantKeys;
         }
         if (oldVersion) {
             for (final Enchantment e : enchantments.keySet()) {
-                enchKeys.put(e, "enchantment." + e.getName().toLowerCase().replace("_", ".")
+                enchantKeys.put(e, "enchantment." + e.getName().toLowerCase().replace("_", ".")
                     .replace("environmental", "all").replace("protection", "protect"));
             }
         } else {
             for (final Enchantment e : enchantments.keySet()) {
-                enchKeys.put(e, "enchantment.minecraft." + e.toString().toLowerCase());
+                enchantKeys.put(e, "enchantment.minecraft." + e.toString().toLowerCase());
             }
         }
-        return enchKeys;
+        return enchantKeys;
     }
     
     /**
@@ -352,7 +351,7 @@ public class LocaleManager{
      * @return the raw keys of the enchantment levels
      */
     public Map<Integer, String> queryLevels(final Map<Enchantment, Integer> enchantments) {
-        final Map<Integer, String> lvlKeys = new HashMap<Integer, String>();
+        final Map<Integer, String> lvlKeys = new HashMap<>();
         if (enchantments == null || enchantments.isEmpty()) {
             return lvlKeys;
         }
@@ -374,36 +373,29 @@ public class LocaleManager{
                 .filter(m -> m.getParameterCount() == 1)
                 .filter(m -> m.getParameters()[0].getType().equals(String.class))
                 .collect(Collectors.toList()).get(0);
-
         return (String) trans.invoke(localeClazz, key);
     }
 
 
     /**
+     * Translate with respect to color codes.
      *
      * @param message The message to be sent to the player
-     * @param key the raw keys of the enchantments
-     * @param placeholder <item>, <enchantment>, <level> and <mob>
+     * @param key the raw key for the object name
+     * @param placeholder <item>, <enchantment>, <level> or <mob>
      * @return the text to replace the placeholder in the message
      */
-    private String translate(String message, String key, String placeholder){
+    private String translate(final String message, final String key, final String placeholder){
         String replacement = "\",{\"translate\":\"" + key + "\"";
-        // Get the text before the placeholder
-        String text = message.split(placeholder)[0];
-        // If the text before the placeholder uses any color code
+        final String text = message.split(placeholder)[0];
         if (text.contains("§")) {
-            // Get the color code that apply on the text and remove §, so we can get the color name later
-            String colorCode = ChatColor.getLastColors(text).replace("§", "");
+            final String colorCode = ChatColor.getLastColors(text).replace("§", "");
             if (ChatColor.getByChar(colorCode) != null) {
-                // Get the color name
-                String colorName = ChatColor.getByChar(colorCode).name();
-
-                // Add the color
+                final String colorName = ChatColor.getByChar(colorCode).name();
                 replacement += ", \"color\":\"" + colorName.toLowerCase() + "\"";
             }
         }
         replacement += "},\"";
-
         return replacement;
     }
 
