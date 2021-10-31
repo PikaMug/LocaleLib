@@ -1,6 +1,6 @@
 name: LocaleLib
 main: me.pikamug.localelib.LocaleLib
-version: 2.2
+version: 2.3
 api-version: 1.13
 description: Show translated names of items, entities & more in client's language
 website: https://www.spigotmc.org/resources/quests.3711/
