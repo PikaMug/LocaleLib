@@ -44,6 +44,7 @@ import org.bukkit.entity.Rabbit;
 import org.bukkit.entity.TropicalFish;
 import org.bukkit.entity.Villager.Profession;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
 
@@ -105,7 +106,7 @@ public class LocaleManager{
      * @param meta ItemMeta for the item being translated
      */
     public boolean sendMessage(final Player player, final String message, final Material material, final short durability, 
-           final Map<Enchantment, Integer> enchantments, final ItemMeta meta) {
+           Map<Enchantment, Integer> enchantments, final ItemMeta meta) {
         if (player == null || material == null) {
             return false;
         }
@@ -115,6 +116,9 @@ public class LocaleManager{
         } catch (final Exception ex) {
             Bukkit.getLogger().severe("[LocaleLib] Unable to query Material: " + material.name());
             return false;
+        }
+        if (meta instanceof EnchantmentStorageMeta) {
+            enchantments = ((EnchantmentStorageMeta)meta).getStoredEnchants();
         }
         final Collection<String> enchKeys = queryEnchantments(enchantments).values();
         final Collection<String> lvlKeys = queryLevels(enchantments).values();
