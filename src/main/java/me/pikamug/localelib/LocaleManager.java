@@ -55,6 +55,7 @@ public class LocaleManager{
     private static boolean oldVersion = false;
     private static boolean hasBasePotionData = false;
     private static boolean hasRepackagedNms = false;
+    private static boolean isPost1dot18 = false;
     private final Map<String, String> oldBlocks = LocaleKeys.getBlockKeys();
     private final Map<String, String> oldItems = LocaleKeys.getItemKeys();
     private final Map<String, String> oldPotions = LocaleKeys.getPotionKeys();
@@ -71,6 +72,10 @@ public class LocaleManager{
         if (Material.getMaterial("AMETHYST_CLUSTER") != null) {
             // Bukkit version is 1.17+
             hasRepackagedNms = true;
+        }
+        if (Material.getMaterial("MUSIC_DISC_OTHERSIDE") != null) {
+            // Bukkit version is 1.18+ (for NMS Item#getName)
+            isPost1dot18 = true;
         }
         final String version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
         try {
@@ -306,7 +311,7 @@ public class LocaleManager{
                 if (item == null) {
                     throw new IllegalArgumentException(material.name() + " material could not be queried!");
                 }                          
-                matKey = (String) itemClazz.getMethod("a").invoke(item);
+                matKey = (String) itemClazz.getMethod(isPost1dot18 ? "a" : "getName").invoke(item);
                 if (meta instanceof PotionMeta) {
                     matKey += ".effect." + ((PotionMeta)meta).getBasePotionData().getType().name().toLowerCase()
                             .replace("regen", "regeneration").replace("speed", "swiftness").replace("jump", "leaping")
