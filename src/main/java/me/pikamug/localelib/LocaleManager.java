@@ -306,7 +306,7 @@ public class LocaleManager{
                 if (item == null) {
                     throw new IllegalArgumentException(material.name() + " material could not be queried!");
                 }                          
-                matKey = (String) itemClazz.getMethod("getName").invoke(item);
+                matKey = (String) itemClazz.getMethod("a").invoke(item);
                 if (meta instanceof PotionMeta) {
                     matKey += ".effect." + ((PotionMeta)meta).getBasePotionData().getType().name().toLowerCase()
                             .replace("regen", "regeneration").replace("speed", "swiftness").replace("jump", "leaping")
