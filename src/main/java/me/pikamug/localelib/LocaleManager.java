@@ -55,7 +55,6 @@ public class LocaleManager{
     private static boolean oldVersion = false;
     private static boolean hasBasePotionData = false;
     private static boolean hasRepackagedNms = false;
-    private static boolean hasRepackagedCb = false;
     private final Map<String, String> oldBlocks = LocaleKeys.getBlockKeys();
     private final Map<String, String> oldItems = LocaleKeys.getItemKeys();
     private final Map<String, String> oldPotions = LocaleKeys.getPotionKeys();
@@ -73,17 +72,9 @@ public class LocaleManager{
             // Bukkit version is 1.17+
             hasRepackagedNms = true;
         }
-        if (Material.getMaterial("MUSIC_DISC_OTHERSIDE") != null) {
-            // Bukkit version is 1.18+
-            hasRepackagedCb = true;
-        }
         final String version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
         try {
-            if (hasRepackagedCb) {
-                craftMagicNumbers = Class.forName("org.bukkit.craftbukkit.util.CraftMagicNumbers");
-            } else {
-                craftMagicNumbers = Class.forName("org.bukkit.craftbukkit.{v}.util.CraftMagicNumbers".replace("{v}", version));
-            }
+            craftMagicNumbers = Class.forName("org.bukkit.craftbukkit.{v}.util.CraftMagicNumbers".replace("{v}", version));
             if (hasRepackagedNms) {
                 itemClazz = Class.forName("net.minecraft.world.item.Item");
                 localeClazz = Class.forName("net.minecraft.locale.LocaleLanguage");
@@ -322,7 +313,7 @@ public class LocaleManager{
                             .replace("instant_heal", "healing").replace("instant_damage", "harming");
                 }
             } catch (final Exception ex) {
-                throw new IllegalArgumentException("[LocaleLib] Unable to query Material: " + material.name(), ex);
+                throw new IllegalArgumentException("[LocaleLib] Unable to query Material: " + material.name());
             }
         }
         return matKey;
