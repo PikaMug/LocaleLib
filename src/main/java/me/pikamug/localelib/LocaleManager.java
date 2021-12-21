@@ -469,7 +469,7 @@ public class LocaleManager{
                 return false;
             }
         }
-        Bukkit.getLogger().severe("Quests received invalid Bukkit version " + bukkitVersion);
+        Bukkit.getLogger().severe("LocaleLib received invalid Bukkit version " + bukkitVersion);
         return false;
     }
 }
