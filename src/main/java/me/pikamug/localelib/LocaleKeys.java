@@ -579,7 +579,7 @@ public class LocaleKeys {
         keys.put("CLAY_BRICK", "item.brick.name");
         keys.put("CLAY_BALL", "item.clay.name");
         keys.put("SUGAR_CANE", "item.reeds.name");
-        keys.put("PAPER ", "item.paper.name");
+        keys.put("PAPER", "item.paper.name");
         keys.put("BOOK", "item.book.name");
         keys.put("SLIME_BALL", "item.slimeball.name");
         keys.put("STORAGE_MINECART", "item.minecartChest.name");
