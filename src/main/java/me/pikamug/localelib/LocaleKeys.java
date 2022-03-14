@@ -687,7 +687,7 @@ public class LocaleKeys {
         keys.put("SKULL_ITEM.0", "item.skull.skeleton.name");
         keys.put("SKULL_ITEM.1", "item.skull.wither.name");
         keys.put("SKULL_ITEM.2", "item.skull.zombie.name");
-        keys.put("SKULL_ITEM.3 ", "item.skull.char.name");
+        keys.put("SKULL_ITEM.3", "item.skull.char.name");
         keys.put("SKULL_ITEM.4", "item.skull.player.name");
         keys.put("SKULL_ITEM.5", "item.skull.creeper.name");
         keys.put("SKULL_ITEM.6", "item.skull.dragon.name");
