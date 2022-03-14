@@ -30,6 +30,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang.NullArgumentException;
@@ -49,6 +51,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
 
 public class LocaleManager{
+    private static final Pattern rgbPattern = Pattern.compile("§x(§[0-9a-fA-F]){6}");
     private static Class<?> craftMagicNumbers = null;
     private static Class<?> itemClazz = null;
     private static Class<?> localeClazz = null;
@@ -177,15 +180,16 @@ public class LocaleManager{
         }
         final Collection<String> enchantKeys = queryEnchantments(enchantments).values();
         final Collection<String> levelKeys = queryLevels(enchantments).values();
+        String msg = message;
         if (!enchantKeys.isEmpty()) {
             for (final String ek : enchantKeys) {
-                message.replaceFirst("<enchantment>", translate(message, ek, "<enchantment>"));
+                msg = message.replaceFirst("<enchantment>", translate(message, ek, "<enchantment>"));
             }
             for (final String lk : levelKeys) {
-                message.replaceFirst("<level>",  translate(message, lk, "<level>"));
+                msg = message.replaceFirst("<level>",  translate(message, lk, "<level>"));
             }
         }
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + player.getName() + " [\"" + message + "\"]");
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + player.getName() + " [\"" + msg + "\"]");
         return true;
     }
     
@@ -392,14 +396,19 @@ public class LocaleManager{
      * @param placeholder <item>, <enchantment>, <level> or <mob>
      * @return the text to replace the placeholder in the message
      */
-    private String translate(final String message, final String key, final String placeholder){
+    private String translate(final String message, final String key, final String placeholder) {
         String replacement = "\",{\"translate\":\"" + key + "\"";
         final String text = message.split(placeholder)[0];
         if (text.contains("§")) {
-            final String colorCode = ChatColor.getLastColors(text).replace("§", "");
-            if (ChatColor.getByChar(colorCode) != null) {
-                final String colorName = ChatColor.getByChar(colorCode).name();
-                replacement += ", \"color\":\"" + colorName.toLowerCase() + "\"";
+            final Matcher matcher = rgbPattern.matcher(text);
+            if (matcher.find()) {
+                replacement += ", \"color\":\"" + "#" + matcher.group().replace("§", "").substring(1) + "\"";
+            } else {
+                final String colorCode = ChatColor.getLastColors(text).replace("§", "");
+                if (ChatColor.getByChar(colorCode) != null) {
+                    final String colorName = ChatColor.getByChar(colorCode).name();
+                    replacement += ", \"color\":\"" + colorName.toLowerCase() + "\"";
+                }
             }
         }
         replacement += "},\"";
