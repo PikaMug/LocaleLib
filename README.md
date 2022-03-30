@@ -16,3 +16,8 @@ Usage
 ---
 
 Documentation can be found in the Wiki: https://github.com/PikaMug/LocaleLib/wiki
+
+License
+---
+
+LocaleLib is licensed under the permissive MIT license. Please see [`LICENSE`](https://github.com/PikaMug/LocaleLib/blob/master/LICENSE) for more info.

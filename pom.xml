@@ -27,7 +27,6 @@
     </dependencies>
     
     <build>
-        <sourceDirectory>src/main/java</sourceDirectory>
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -38,25 +37,5 @@
                 </configuration>
             </plugin>
         </plugins>
-        
-        <resources>
-            <resource>
-                <targetPath>.</targetPath>
-                <directory>${basedir}/src/main/resources/</directory>
-                <filtering>true</filtering>
-                <includes>
-                    <include>plugin.yml</include>
-                </includes>
-            </resource>
-            <resource>
-                <targetPath>.</targetPath>
-                <directory>${basedir}/</directory>
-                <filtering>false</filtering>
-                <includes>
-                    <include>LICENSE</include>
-                    <include>README.md</include>
-                </includes>
-            </resource>
-        </resources>
     </build>
 </project>
