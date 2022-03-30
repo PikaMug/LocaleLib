@@ -20,4 +20,4 @@ Documentation can be found in the Wiki: https://github.com/PikaMug/LocaleLib/wik
 License
 ---
 
-LocaleLib is licensed under the permissive MIT license. Please see [`LICENSE`](https://github.com/PikaMug/LocaleLib/blob/master/LICENSE) for more info.
+LocaleLib is licensed under the permissive MIT license. Please see [`LICENSE.txt`](https://github.com/PikaMug/LocaleLib/blob/master/LICENSE.txt) for more info.
