@@ -250,6 +250,18 @@ public class LocaleManager{
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + player.getName() + " [\"" + msg + "\"]");
         return true;
     }
+
+    /**
+     * Gets the key name of the specified item as it would appear in a Minecraft lang file.
+     *
+     * @param itemStack the item to check
+     * @return the raw key
+     * @throws IllegalArgumentException if that item could not be found
+     */
+    @SuppressWarnings("deprecation")
+    public String queryItemStack(final ItemStack itemStack) {
+        return queryMaterial(itemStack.getType(), itemStack.getDurability(), itemStack.getItemMeta());
+    }
     
     /**
      * Gets the key name of the specified material as it would appear in a Minecraft lang file.
@@ -267,6 +279,7 @@ public class LocaleManager{
      * 
      * @param material the material to check
      * @param durability the material type to check
+     * @param meta the item meta data to check
      * @return the raw key
      * @throws IllegalArgumentException if an item with that material and durability could not be found
      * @throws NullArgumentException if the specified material parameter is null
