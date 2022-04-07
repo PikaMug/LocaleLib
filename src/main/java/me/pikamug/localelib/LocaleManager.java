@@ -39,6 +39,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Ocelot;
 import org.bukkit.entity.Player;
@@ -209,27 +210,45 @@ public class LocaleManager{
         if (player == null || message == null || type == null) {
             return false;
         }
+        final String key = queryEntityType(type, extra);
+        final String msg = message.replace("<mob>", translate(message, key, "<mob>"));
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + player.getName() + " [\"" + msg + "\"]");
+        return true;
+    }
+
+    /**
+     * Gets the key name of the specified entity type as it would appear in a Minecraft lang file.
+     *
+     * @param entityType the entity type to check
+     * @param extra the extra data to check, i.e. Profession, Pattern
+     * @return the raw key
+     * @throws NullArgumentException if specified entity type parameter is null
+     */
+    public String queryEntityType(final EntityType entityType, final String extra) {
+        if (entityType == null) {
+            throw new NullArgumentException("[LocaleLib] EntityType cannot be null");
+        }
         String key = "";
         if (oldVersion) {
-            if (type.name().equals("VILLAGER") && extra != null && Profession.valueOf(extra) != null) {
-                    key = oldEntities.get(type.name() + "." + Profession.valueOf(extra).name());
-            } else if (type.name().equals("OCELOT") && extra != null && Ocelot.Type.valueOf(extra) != null) {
-                key = oldEntities.get(type.name() + "." + Ocelot.Type.valueOf(extra).name());
-            } else if (type.name().equals("RABBIT") && extra != null && Rabbit.Type.valueOf(extra) != null 
+            if (entityType.name().equals("VILLAGER") && extra != null && Profession.valueOf(extra) != null) {
+                key = oldEntities.get(entityType.name() + "." + Profession.valueOf(extra).name());
+            } else if (entityType.name().equals("OCELOT") && extra != null && Ocelot.Type.valueOf(extra) != null) {
+                key = oldEntities.get(entityType.name() + "." + Ocelot.Type.valueOf(extra).name());
+            } else if (entityType.name().equals("RABBIT") && extra != null && Rabbit.Type.valueOf(extra) != null
                     && Rabbit.Type.valueOf(extra).equals(Rabbit.Type.THE_KILLER_BUNNY)) {
-                key = oldEntities.get(type.name() + "." + Rabbit.Type.valueOf(extra).name());
+                key = oldEntities.get(entityType.name() + "." + Rabbit.Type.valueOf(extra).name());
             } else {
-                key = oldEntities.get(type.name());
+                key = oldEntities.get(entityType.name());
             }
         } else {
-            if (type.name().equals("PIG_ZOMBIE")) {
+            if (entityType.name().equals("PIG_ZOMBIE")) {
                 key = "entity.minecraft.zombie_pigman";
-            } else if (type.name().equals("VILLAGER") && extra != null && Profession.valueOf(extra) != null) {
+            } else if (entityType.name().equals("VILLAGER") && extra != null && Profession.valueOf(extra) != null) {
                 key = "entity.minecraft.villager." + Profession.valueOf(extra).name();
-            } else if (type.name().equals("RABBIT") && extra != null && Rabbit.Type.valueOf(extra) != null 
+            } else if (entityType.name().equals("RABBIT") && extra != null && Rabbit.Type.valueOf(extra) != null
                     && Rabbit.Type.valueOf(extra).equals(Rabbit.Type.THE_KILLER_BUNNY)) {
                 key = "entity.minecraft.killer_bunny";
-            } else if (type.name().equals("TROPICAL_FISH") && extra != null) {
+            } else if (entityType.name().equals("TROPICAL_FISH") && extra != null) {
                 if (TropicalFish.Pattern.valueOf(extra) != null) {
                     key = "entity.minecraft.tropical_fish.type." + TropicalFish.Pattern.valueOf(extra);
                 } else {
@@ -243,12 +262,10 @@ public class LocaleManager{
                     }
                 }
             } else {
-                key = "entity.minecraft." + type.toString().toLowerCase();
+                key = "entity.minecraft." + entityType.toString().toLowerCase();
             }
         }
-        final String msg = message.replace("<mob>", translate(message, key, "<mob>"));
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + player.getName() + " [\"" + msg + "\"]");
-        return true;
+        return key;
     }
 
     /**
@@ -256,10 +273,13 @@ public class LocaleManager{
      *
      * @param itemStack the item to check
      * @return the raw key
-     * @throws IllegalArgumentException if that item could not be found
+     * @throws NullArgumentException if specified item parameter is null
      */
     @SuppressWarnings("deprecation")
-    public String queryItemStack(final ItemStack itemStack) {
+    public String queryItemStack(final ItemStack itemStack) throws NullArgumentException {
+        if (itemStack == null) {
+            throw new NullArgumentException("[LocaleLib] ItemStack cannot be null");
+        }
         return queryMaterial(itemStack.getType(), itemStack.getDurability(), itemStack.getItemMeta());
     }
     
@@ -270,7 +290,7 @@ public class LocaleManager{
      * @return the raw key
      * @throws IllegalArgumentException if an item with that material could not be found
      */
-    public String queryMaterial(final Material material) throws IllegalArgumentException, NullArgumentException {
+    public String queryMaterial(final Material material) throws IllegalArgumentException {
         return queryMaterial(material, (short) 0, null);
     }
     
@@ -278,7 +298,7 @@ public class LocaleManager{
      * Gets the key name of the specified material as it would appear in a Minecraft lang file.
      * 
      * @param material the material to check
-     * @param durability the material type to check
+     * @param durability the durability to check
      * @param meta the item meta data to check
      * @return the raw key
      * @throws IllegalArgumentException if an item with that material and durability could not be found
