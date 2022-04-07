@@ -45,6 +45,7 @@ import org.bukkit.entity.Ocelot;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Rabbit;
 import org.bukkit.entity.TropicalFish;
+import org.bukkit.entity.Villager;
 import org.bukkit.entity.Villager.Profession;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
@@ -217,14 +218,48 @@ public class LocaleManager{
     }
 
     /**
+     * Gets the key name of the specified entity as it would appear in a Minecraft lang file.
+     *
+     * @param entity the entity to check
+     * @return the raw key
+     * @throws NullArgumentException if specified entity parameter is null
+     */
+    public String queryEntity(final Entity entity) throws NullArgumentException {
+        if (entity == null) {
+            throw new NullArgumentException("[LocaleLib] Entity cannot be null");
+        }
+        String extra = null;
+        if (entity instanceof Villager) {
+            Villager villager = (Villager) entity;
+            extra = villager.getProfession().name();
+        } else if (entity instanceof Ocelot) {
+            Ocelot ocelot = (Ocelot) entity;
+            extra = ocelot.getCatType().name();
+        } else if (entity instanceof Rabbit) {
+            Rabbit rabbit = (Rabbit) entity;
+            if (rabbit.getRabbitType().equals(Rabbit.Type.THE_KILLER_BUNNY)) { // Only type with translation
+                extra = rabbit.getRabbitType().name();
+            }
+        }
+        if (!oldVersion) {
+            if (entity instanceof TropicalFish) {
+                TropicalFish tropicalFish = (TropicalFish) entity;
+                extra = tropicalFish.getPattern().name();
+            }
+        }
+        return queryEntityType(entity.getType(), extra);
+    }
+
+    /**
      * Gets the key name of the specified entity type as it would appear in a Minecraft lang file.
+     * Extra data is optional and may be left null or empty.
      *
      * @param entityType the entity type to check
-     * @param extra the extra data to check, i.e. Profession, Pattern
+     * @param extra the extra data to check, i.e. name of Profession
      * @return the raw key
      * @throws NullArgumentException if specified entity type parameter is null
      */
-    public String queryEntityType(final EntityType entityType, final String extra) {
+    public String queryEntityType(final EntityType entityType, final String extra) throws NullArgumentException {
         if (entityType == null) {
             throw new NullArgumentException("[LocaleLib] EntityType cannot be null");
         }
