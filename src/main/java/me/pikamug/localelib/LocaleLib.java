@@ -26,8 +26,7 @@ package me.pikamug.localelib;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
-import me.pikamug.localelib.LocaleManager;
-
+@SuppressWarnings("unused")
 public class LocaleLib extends JavaPlugin {
     private LocaleManager manager;
     
@@ -38,9 +37,8 @@ public class LocaleLib extends JavaPlugin {
     
     @Override
     public void onDisable() {
-        
     }
-    
+
     public LocaleManager getLocaleManager() {
         return manager;
     }

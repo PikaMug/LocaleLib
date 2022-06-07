@@ -38,6 +38,7 @@ import org.apache.commons.lang.NullArgumentException;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.block.data.Ageable;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -52,6 +53,7 @@ import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
 
+@SuppressWarnings("unused")
 public class LocaleManager{
     private static final Pattern rgbPattern = Pattern.compile("§x(§[0-9a-fA-F]){6}");
     private static Class<?> craftMagicNumbers = null;
@@ -376,22 +378,28 @@ public class LocaleManager{
                 }
             }
         } else {
-            try {
-                final Method m = craftMagicNumbers.getDeclaredMethod("getItem", material.getClass());
-                m.setAccessible(true);
-                final Object item = m.invoke(craftMagicNumbers, material);
-                if (item == null) {
-                    throw new IllegalArgumentException(material.name() + " material could not be queried!");
-                }                          
-                matKey = (String) itemClazz.getMethod(isPost1dot18 ? "a" : "getName").invoke(item);
-                if (meta instanceof PotionMeta) {
-                    matKey += ".effect." + ((PotionMeta)meta).getBasePotionData().getType().name().toLowerCase()
-                            .replace("regen", "regeneration").replace("speed", "swiftness").replace("jump", "leaping")
-                            .replace("instant_heal", "healing").replace("instant_damage", "harming");
+            if (material.isBlock()) {
+                if (material.createBlockData() instanceof Ageable) {
+                    matKey = "block.minecraft." + material.name().toLowerCase();
                 }
-            } catch (final Exception ex) {
-                ex.printStackTrace();
-                throw new IllegalArgumentException("[LocaleLib] Unable to query Material: " + material.name());
+            } else {
+                try {
+                    final Method m = craftMagicNumbers.getDeclaredMethod("getItem", material.getClass());
+                    m.setAccessible(true);
+                    final Object item = m.invoke(craftMagicNumbers, material);
+                    if (item == null) {
+                        throw new IllegalArgumentException(material.name() + " material could not be queried!");
+                    }
+                    matKey = (String) itemClazz.getMethod(isPost1dot18 ? "a" : "getName").invoke(item);
+                    if (meta instanceof PotionMeta) {
+                        matKey += ".effect." + ((PotionMeta)meta).getBasePotionData().getType().name().toLowerCase()
+                                .replace("regen", "regeneration").replace("speed", "swiftness").replace("jump", "leaping")
+                                .replace("instant_heal", "healing").replace("instant_damage", "harming");
+                    }
+                } catch (final Exception ex) {
+                    ex.printStackTrace();
+                    throw new IllegalArgumentException("[LocaleLib] Unable to query Material: " + material.name());
+                }
             }
         }
         return matKey;
@@ -472,9 +480,9 @@ public class LocaleManager{
             if (matcher.find()) {
                 replacement += ", \"color\":\"" + "#" + matcher.group().replace("§", "").substring(1) + "\"";
             } else {
-                final String colorCode = ChatColor.getLastColors(text).replace("§", "");
-                if (ChatColor.getByChar(colorCode) != null) {
-                    final String colorName = ChatColor.getByChar(colorCode).name();
+                final ChatColor color = ChatColor.getByChar(ChatColor.getLastColors(text).replace("§", ""));
+                if (color != null) {
+                    final String colorName = color.name();
                     replacement += ", \"color\":\"" + colorName.toLowerCase() + "\"";
                 }
             }
