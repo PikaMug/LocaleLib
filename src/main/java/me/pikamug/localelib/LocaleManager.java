@@ -378,10 +378,8 @@ public class LocaleManager{
                 }
             }
         } else {
-            if (material.isBlock()) {
-                if (material.createBlockData() instanceof Ageable) {
-                    matKey = "block.minecraft." + material.name().toLowerCase();
-                }
+            if (material.isBlock() && material.createBlockData() instanceof Ageable) {
+                matKey = "block.minecraft." + material.name().toLowerCase();
             } else {
                 try {
                     final Method m = craftMagicNumbers.getDeclaredMethod("getItem", material.getClass());
