@@ -141,7 +141,7 @@ public class LocaleManager{
         for (final String lk : lvlKeys) {
             msg = msg.replaceFirst("<level>",  translate(msg, lk, "<level>"));
         }
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + player.getName() + " [\"" + msg + "\"]");
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw \"" + player.getName() + "\" [\"" + msg + "\"]");
         return true;
     }
     
@@ -193,7 +193,7 @@ public class LocaleManager{
                 msg = message.replaceFirst("<level>",  translate(message, lk, "<level>"));
             }
         }
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + player.getName() + " [\"" + msg + "\"]");
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw \"" + player.getName() + "\" [\"" + msg + "\"]");
         return true;
     }
     
@@ -215,7 +215,7 @@ public class LocaleManager{
         }
         final String key = queryEntityType(type, extra);
         final String msg = message.replace("<mob>", translate(message, key, "<mob>"));
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + player.getName() + " [\"" + msg + "\"]");
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw \"" + player.getName() + "\" [\"" + msg + "\"]");
         return true;
     }
 
