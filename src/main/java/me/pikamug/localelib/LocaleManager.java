@@ -278,7 +278,9 @@ public class LocaleManager{
                 key = oldEntities.get(entityType.name());
             }
         } else {
-            if (entityType.name().equals("PIG_ZOMBIE")) {
+            if (entityType.name().equals("SNOWMAN")) {
+                key = "entity.minecraft.snow_golem";
+            } else if (entityType.name().equals("PIG_ZOMBIE")) {
                 key = "entity.minecraft.zombie_pigman";
             } else if (entityType.name().equals("VILLAGER") && extra != null && Profession.valueOf(extra) != null) {
                 key = "entity.minecraft.villager." + Profession.valueOf(extra).name();
