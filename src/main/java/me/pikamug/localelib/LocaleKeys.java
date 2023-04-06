@@ -24,8 +24,13 @@
 
 package me.pikamug.localelib;
 
+import org.bukkit.plugin.java.JavaPlugin;
+
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Properties;
 
 public class LocaleKeys {
     public static LinkedHashMap<String, String> getBlockKeys() {
@@ -965,5 +970,18 @@ public class LocaleKeys {
         keys.put("FISHING_HOOK", "item.fishingRod.name"); // added
         keys.put("COMPLEX_PART", "entity.EnderDragon.name"); // added
         return keys;
+    }
+
+    /**
+     * Loads all the translation entries from the en_US.lang file into a Properties object.
+     * @return A Properties object consisting of the english translations
+     * @throws IOException if an error occurred when reading from the en_US.lang file
+     */
+    public static Properties loadTranslations() throws IOException {
+        ClassLoader classLoader = JavaPlugin.class.getClassLoader();
+        InputStream inputStream = classLoader.getResourceAsStream("assets/minecraft/lang/en_US.lang");
+        Properties properties = new Properties();
+        properties.load(inputStream);
+        return properties;
     }
 }

@@ -24,12 +24,10 @@
 
 package me.pikamug.localelib;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -69,6 +67,8 @@ public class LocaleManager{
     private final Map<String, String> oldLingeringPotions = LocaleKeys.getLingeringPotionKeys();
     private final Map<String, String> oldSplashPotions = LocaleKeys.getSplashPotionKeys();
     private final Map<String, String> oldEntities = LocaleKeys.getEntityKeys();
+
+    private Properties englishTranslations;
     
     public LocaleManager() {
         oldVersion = isBelow113();
@@ -95,6 +95,12 @@ public class LocaleManager{
                 localeClazz = Class.forName("net.minecraft.server.{v}.LocaleLanguage".replace("{v}", version));
             }
         } catch (final ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            englishTranslations = LocaleKeys.loadTranslations();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -447,22 +453,16 @@ public class LocaleManager{
         }
         return lvlKeys;
     }
-    
+
     /**
      * Gets the display name of the specified material as it would appear in a Minecraft lang file.
-     * 
+     *
      * @param key the raw key for the object name
      * @return the display name of the specified key within the server locale file
      */
-    public String toServerLocale(final String key) throws IllegalAccessException, InvocationTargetException {
-        final Method trans = Arrays.stream(localeClazz.getMethods())
-                .filter(m -> m.getReturnType().equals(String.class))
-                .filter(m -> m.getParameterCount() == 1)
-                .filter(m -> m.getParameters()[0].getType().equals(String.class))
-                .collect(Collectors.toList()).get(0);
-        return (String) trans.invoke(localeClazz, key);
+    public String toServerLocale(final String key) {
+        return englishTranslations.getProperty(key);
     }
-
 
     /**
      * Translate with respect to color codes.
