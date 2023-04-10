@@ -979,7 +979,7 @@ public class LocaleKeys {
      */
     public static Properties loadTranslations() throws IOException {
         ClassLoader classLoader = JavaPlugin.class.getClassLoader();
-        InputStream inputStream = classLoader.getResourceAsStream("assets/minecraft/lang/en_US.lang");
+        InputStream inputStream = classLoader.getResourceAsStream("assets/minecraft/lang/en_us.lang");
         Properties properties = new Properties();
         properties.load(inputStream);
         return properties;
