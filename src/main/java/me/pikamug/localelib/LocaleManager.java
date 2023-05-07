@@ -281,7 +281,9 @@ public class LocaleManager{
                 key = oldEntities.get(entityType.name());
             }
         } else {
-            if (entityType.name().equals("SNOWMAN")) {
+            if (entityType.name().equals("MUSHROOM_COW")) {
+                key = "entity.minecraft.mooshroom";
+            } else if (entityType.name().equals("SNOWMAN")) {
                 key = "entity.minecraft.snow_golem";
             } else if (entityType.name().equals("PIG_ZOMBIE")) {
                 key = "entity.minecraft.zombie_pigman";
