@@ -24,15 +24,15 @@
 
 package me.pikamug.localelib;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang.NullArgumentException;
 import org.bukkit.Bukkit;
@@ -58,7 +58,6 @@ public class LocaleManager{
     private static final Pattern rgbPattern = Pattern.compile("§x(§[0-9a-fA-F]){6}");
     private static Class<?> craftMagicNumbers = null;
     private static Class<?> itemClazz = null;
-    private static Class<?> localeClazz = null;
     private static boolean oldVersion = false;
     private static boolean hasBasePotionData = false;
     private static boolean hasRepackagedNms = false;
@@ -69,6 +68,7 @@ public class LocaleManager{
     private final Map<String, String> oldLingeringPotions = LocaleKeys.getLingeringPotionKeys();
     private final Map<String, String> oldSplashPotions = LocaleKeys.getSplashPotionKeys();
     private final Map<String, String> oldEntities = LocaleKeys.getEntityKeys();
+    private Properties englishTranslations;
     
     public LocaleManager() {
         oldVersion = isBelow113();
@@ -89,12 +89,15 @@ public class LocaleManager{
             craftMagicNumbers = Class.forName("org.bukkit.craftbukkit.{v}.util.CraftMagicNumbers".replace("{v}", version));
             if (hasRepackagedNms) {
                 itemClazz = Class.forName("net.minecraft.world.item.Item");
-                localeClazz = Class.forName("net.minecraft.locale.LocaleLanguage");
             } else {
                 itemClazz = Class.forName("net.minecraft.server.{v}.Item".replace("{v}", version));
-                localeClazz = Class.forName("net.minecraft.server.{v}.LocaleLanguage".replace("{v}", version));
             }
         } catch (final ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        try {
+            englishTranslations = LocaleKeys.loadTranslations();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -455,12 +458,7 @@ public class LocaleManager{
      * @return the display name of the specified key within the server locale file
      */
     public String toServerLocale(final String key) throws IllegalAccessException, InvocationTargetException {
-        final Method trans = Arrays.stream(localeClazz.getMethods())
-                .filter(m -> m.getReturnType().equals(String.class))
-                .filter(m -> m.getParameterCount() == 1)
-                .filter(m -> m.getParameters()[0].getType().equals(String.class))
-                .collect(Collectors.toList()).get(0);
-        return (String) trans.invoke(localeClazz, key);
+        return englishTranslations.getProperty(key);
     }
 
 
