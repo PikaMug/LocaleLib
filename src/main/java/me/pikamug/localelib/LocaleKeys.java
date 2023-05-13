@@ -973,13 +973,13 @@ public class LocaleKeys {
     }
 
     /**
-     * Loads all the translation entries from the en_US.lang file into a Properties object.
-     * @return A Properties object consisting of the english translations
-     * @throws IOException if an error occurred when reading from the en_US.lang file
+     * Loads all the translation entries from lang file into a Properties object.
+     * @return Properties object consisting of the english translations
+     * @throws IOException if an error occurred when reading from lang file
      */
     public static Properties loadTranslations() throws IOException {
         final ClassLoader classLoader = JavaPlugin.class.getClassLoader();
-        InputStream inputStream = classLoader.getResourceAsStream("assets/minecraft/lang/en_us.lang");
+        InputStream inputStream = classLoader.getResourceAsStream("assets/minecraft/lang/en_us.json");
         if (inputStream == null) {
             inputStream = classLoader.getResourceAsStream("assets/minecraft/lang/en_US.lang");
         }
