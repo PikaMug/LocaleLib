@@ -24,6 +24,7 @@
 
 package me.pikamug.localelib;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -97,6 +98,8 @@ public class LocaleManager{
         }
         try {
             englishTranslations = LocaleKeys.loadTranslations();
+        } catch (FileNotFoundException e) {
+            englishTranslations = null;
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -460,6 +463,9 @@ public class LocaleManager{
      * @return the display name of the specified key within the server locale file
      */
     public String toServerLocale(final String key) throws IllegalAccessException, InvocationTargetException {
+        if (englishTranslations == null) {
+            throw new IllegalStateException("English translations have not been loaded properly!");
+        }
         return englishTranslations.getProperty(key);
     }
 

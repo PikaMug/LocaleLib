@@ -24,6 +24,7 @@
 
 package me.pikamug.localelib;
 
+import java.io.FileNotFoundException;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.IOException;
@@ -982,6 +983,9 @@ public class LocaleKeys {
         InputStream inputStream = classLoader.getResourceAsStream("assets/minecraft/lang/en_us.json");
         if (inputStream == null) {
             inputStream = classLoader.getResourceAsStream("assets/minecraft/lang/en_US.lang");
+        }
+        if (inputStream == null) {
+            throw new FileNotFoundException("Could not find en_us.json or en_US.lang");
         }
         final Properties properties = new Properties();
         properties.load(inputStream);
