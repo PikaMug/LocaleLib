@@ -405,7 +405,6 @@ public class LocaleManager{
                 final ItemStack i = new ItemStack(material, 1, durability);
                 if (durability >= 0 && i.getItemMeta() instanceof PotionMeta) {
                     if (hasBasePotionData) {
-                        // 1.9+
                         if (material.equals(Material.POTION)) {
                             matKey = oldPotions.get(((PotionMeta)i.getItemMeta()).getBasePotionData().getType().name());
                         } else if (material.equals(Material.LINGERING_POTION)) {

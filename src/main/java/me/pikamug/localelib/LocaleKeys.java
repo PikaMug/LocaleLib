@@ -34,7 +34,7 @@ import java.util.Properties;
 
 public class LocaleKeys {
     public static LinkedHashMap<String, String> getBlockKeys() {
-        LinkedHashMap<String, String> keys = new LinkedHashMap<>();
+        final LinkedHashMap<String, String> keys = new LinkedHashMap<>();
         keys.put("AIR", "tile.air.name");
         keys.put("BARRIER", "tile.barrier.name");
         keys.put("STONE", "tile.stone.stone.name");
@@ -492,7 +492,7 @@ public class LocaleKeys {
     }
     
     public static LinkedHashMap<String, String> getItemKeys() {
-        LinkedHashMap<String, String> keys = new LinkedHashMap<>();
+        final LinkedHashMap<String, String> keys = new LinkedHashMap<>();
         keys.put("NAME_TAG", "item.nameTag.name");
         keys.put("LEASH", "item.leash.name");
         keys.put("IRON_SPADE", "item.shovelIron.name");
@@ -875,7 +875,7 @@ public class LocaleKeys {
     }
     
     public static Map<String, String> getLingeringPotionKeys() {
-        LinkedHashMap<String, String> keys = new LinkedHashMap<>();
+        final LinkedHashMap<String, String> keys = new LinkedHashMap<>();
         keys.put("UNCRAFTABLE", "lingering_potion.effect.empty");
         keys.put("WATER", "lingering_potion.effect.water");
         keys.put("MUNDANE", "lingering_potion.effect.mundane");
@@ -900,7 +900,7 @@ public class LocaleKeys {
     }
     
     public static Map<String, String> getEntityKeys() {
-        LinkedHashMap<String, String> keys = new LinkedHashMap<>();
+        final LinkedHashMap<String, String> keys = new LinkedHashMap<>();
         keys.put("DROPPED_ITEM", "entity.Item.name");
         keys.put("EXPERIENCE_ORB", "entity.XPOrb.name");
         keys.put("SMALL_FIREBALL", "entity.SmallFireball.name");
