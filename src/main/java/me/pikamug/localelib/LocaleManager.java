@@ -52,6 +52,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
+import org.bukkit.potion.Potion;
 
 @SuppressWarnings("unused")
 public class LocaleManager{
@@ -64,6 +65,7 @@ public class LocaleManager{
     private static boolean isPost1dot18 = false;
     private final Map<String, String> oldBlocks = LocaleKeys.getBlockKeys();
     private final Map<String, String> oldItems = LocaleKeys.getItemKeys();
+    private final Map<String, String> oldPotions1dot8 = LocaleKeys.getPotionKeys1dot8();
     private final Map<String, String> oldPotions = LocaleKeys.getPotionKeys();
     private final Map<String, String> oldLingeringPotions = LocaleKeys.getLingeringPotionKeys();
     private final Map<String, String> oldSplashPotions = LocaleKeys.getSplashPotionKeys();
@@ -101,6 +103,41 @@ public class LocaleManager{
             e.printStackTrace();
         }
     }
+
+    /**
+     * Send message with item name translated to the client's locale.
+     * ItemStack is required. This method supports 1.8 potions.<p>
+     *
+     * Message should contain {@code <item>} string for replacement by
+     * this method (along with applicable {@code <enchantment>} and/or
+     * {@code <level>} strings).
+     *
+     * @param player The player whom the message is to be sent to
+     * @param message The message to be sent to the player
+     * @param itemStack The item to be translated
+     */
+    public boolean sendMessage(final Player player, final String message, final ItemStack itemStack) {
+        if (player == null || itemStack == null) {
+            return false;
+        }
+        if (!hasBasePotionData) {
+            final Potion potion = Potion.fromItemStack(itemStack);
+            String msg = message;
+            if (potion.isSplash()) {
+                msg = message.replace("<item>", "<prefix> <item>")
+                        .replace("<prefix>", translate(message, "potion.prefix.grenade", "<prefix>"));
+            }
+            String potionName = "item.potion.name";
+            if (potion.getType().getEffectType() != null) {
+                potionName = oldPotions1dot8.get(potion.getType().getEffectType().getName());
+            }
+            msg = msg.replace("<item>", translate(message, potionName, "<item>"));
+
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + formatName(player) + " [\"" + msg + "\"]");
+            return true;
+        }
+        return sendMessage(player, message, itemStack.getType(), itemStack.getDurability(), itemStack.getEnchantments(), itemStack.getItemMeta());
+    }
     
     /**
      * Send message with item name translated to the client's locale.
@@ -115,7 +152,7 @@ public class LocaleManager{
      * 
      * @param player The player whom the message is to be sent to
      * @param message The message to be sent to the player
-     * @param material The item to be translated
+     * @param material Material for the item being translated
      * @param durability Durability for the item being translated
      * @param enchantments Enchantments for the item being translated
      * @param meta ItemMeta for the item being translated
@@ -160,7 +197,7 @@ public class LocaleManager{
      * 
      * @param player The player whom the message is to be sent to
      * @param message The message to be sent to the player
-     * @param material The item to be translated
+     * @param material Material for the item being translated
      * @param durability Durability for the item being translated
      * @param enchantments Enchantments for the item being translated
      */
@@ -368,6 +405,7 @@ public class LocaleManager{
                 final ItemStack i = new ItemStack(material, 1, durability);
                 if (durability >= 0 && i.getItemMeta() instanceof PotionMeta) {
                     if (hasBasePotionData) {
+                        // 1.9+
                         if (material.equals(Material.POTION)) {
                             matKey = oldPotions.get(((PotionMeta)i.getItemMeta()).getBasePotionData().getType().name());
                         } else if (material.equals(Material.LINGERING_POTION)) {

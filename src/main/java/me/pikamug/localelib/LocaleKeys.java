@@ -795,8 +795,37 @@ public class LocaleKeys {
         keys.put("WALL_BANNER.0", "item.WALL_BANNER.white.name"); // added
         return keys;
     }
+
+    public static Map<String, String> getPotionKeys1dot8() {
+        final LinkedHashMap<String, String> keys = new LinkedHashMap<>();
+        keys.put("SPEED", "potion.moveSpeed.postfix");
+        keys.put("SLOW", "potion.moveSlowdown.postfix");
+        keys.put("FAST_DIGGING", "potion.digSpeed.postfix");
+        keys.put("SLOW_DIGGING", "potion.digSlowDown.postfix");
+        keys.put("INCREASE_DAMAGE", "potion.damageBoost.postfix");
+        keys.put("WEAKNESS", "potion.weakness.postfix");
+        keys.put("HEAL", "potion.heal.postfix");
+        keys.put("HARM", "potion.harm.postfix");
+        keys.put("JUMP", "potion.jump.postfix");
+        keys.put("CONFUSION", "potion.confusion.postfix");
+        keys.put("REGENERATION", "potion.regeneration.postfix");
+        keys.put("DAMAGE_RESISTANCE", "potion.resistance.postfix");
+        keys.put("FIRE_RESISTANCE", "potion.fireResistance.postfix");
+        keys.put("WATER_BREATHING", "potion.waterBreathing.postfix");
+        keys.put("INVISIBILITY", "potion.invisibility.postfix");
+        keys.put("BLINDNESS", "potion.blindness.postfix");
+        keys.put("NIGHT_VISION", "potion.nightVision.postfix");
+        keys.put("HUNGER", "potion.hunger.postfix");
+        keys.put("POISON", "potion.poison.postfix");
+        keys.put("WITHER", "potion.wither.postfix");
+        keys.put("LUCK", "potion.healthBoost.postfix");
+        keys.put("ABSORPTION", "potion.absorption.postfix");
+        keys.put("SATURATION", "potion.saturation.postfix");
+        return keys;
+    }
+
     public static Map<String, String> getPotionKeys() {
-        LinkedHashMap<String, String> keys = new LinkedHashMap<>();
+        final LinkedHashMap<String, String> keys = new LinkedHashMap<>();
         keys.put("UNCRAFTABLE", "potion.effect.empty");
         keys.put("WATER", "potion.effect.water");
         keys.put("MUNDANE", "potion.effect.mundane");
@@ -821,7 +850,7 @@ public class LocaleKeys {
     }
     
     public static Map<String, String> getSplashPotionKeys() {
-        LinkedHashMap<String, String> keys = new LinkedHashMap<>();
+        final LinkedHashMap<String, String> keys = new LinkedHashMap<>();
         keys.put("UNCRAFTABLE", "splash_potion.effect.empty");
         keys.put("WATER", "splash_potion.effect.water");
         keys.put("MUNDANE", "splash_potion.effect.mundane");
