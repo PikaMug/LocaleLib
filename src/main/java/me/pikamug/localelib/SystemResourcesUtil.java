@@ -1,5 +1,7 @@
 package me.pikamug.localelib;
 
+import org.bukkit.Bukkit;
+
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -46,7 +48,9 @@ public class SystemResourcesUtil {
                 }
             }
         }
-
+        if (matchingResources.isEmpty()) {
+            Bukkit.getLogger().warning("[LocaleLib] " + baseFolder + " could not be found!");
+        }
         return matchingResources.iterator();
     }
 

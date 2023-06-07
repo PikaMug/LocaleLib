@@ -1014,7 +1014,7 @@ public class LocaleKeys {
      */
     public static Map<String, String> loadTranslations() throws IOException {
         final ClassLoader classLoader = SystemResourcesUtil.getContextClassLoader();
-        Iterator<String> matchingResources = SystemResourcesUtil.findResourcesBySearch(classLoader,"assets/minecraft/lang/", ".+(\\.json|\\.lang)");
+        final Iterator<String> matchingResources = SystemResourcesUtil.findResourcesBySearch(classLoader,"assets/minecraft/lang/", ".+(\\.json|\\.lang)");
 
         Map<String, String> dictionary = new HashMap<>();
         while (matchingResources.hasNext()) {
@@ -1029,16 +1029,18 @@ public class LocaleKeys {
                 }
             }
         }
+        if (dictionary.isEmpty()) {
+            Bukkit.getLogger().warning("[LocaleLib] Locale asset could not be loaded!");
+        }
         return dictionary;
     }
 
-    public static HashMap<String, String> loadJsonFile(InputStream inputStream) {
-        Bukkit.getLogger().info("Loading locales from json...");
-        HashMap<String, String> map = new HashMap<>();
+    public static HashMap<String, String> loadJsonFile(final InputStream inputStream) {
+        final HashMap<String, String> map = new HashMap<>();
         try {
-            JSONParser parser = new JSONParser();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-            JSONObject json = (JSONObject) parser.parse(reader);
+            final JSONParser parser = new JSONParser();
+            final BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            final JSONObject json = (JSONObject) parser.parse(reader);
 
             for (Object key : json.keySet()) {
                 String keyStr = (String) key;
@@ -1048,15 +1050,13 @@ public class LocaleKeys {
         } catch (IOException | ParseException e) {
             e.printStackTrace();
         }
-        Bukkit.getLogger().info("Finished loading locales from json, "+map.size()+" entries loaded!");
         return map;
     }
 
     public static HashMap<String, String> loadLangFile(InputStream inputStream) {
-        Bukkit.getLogger().info("Loading locales from lang...");
-        HashMap<String, String> map = new HashMap<>();
+        final HashMap<String, String> map = new HashMap<>();
         try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            final BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
             String line;
 
             while ((line = reader.readLine()) != null) {
@@ -1064,19 +1064,14 @@ public class LocaleKeys {
                     continue;
                 }
 
-                String[] parts = line.split("=", 2);
+                final String[] parts = line.split("=", 2);
                 if (parts.length >= 2) {
-                    String key = parts[0];
-                    String value = parts[1];
-                    map.put(key, value);
-                } else {
-                    System.out.println("ignoring line: " + line);
+                    map.put(parts[0], parts[1]);
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        Bukkit.getLogger().info("Finished loading locales from lang, "+map.size()+" entries loaded!");
         return map;
     }
 }

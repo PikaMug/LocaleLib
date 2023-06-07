@@ -92,9 +92,6 @@ public class LocaleManager{
         }
         try {
             englishTranslations = LocaleKeys.loadTranslations();
-            if (englishTranslations.isEmpty()) {
-                Bukkit.getLogger().warning("The English locale couldn't be found or loaded!");
-            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -602,7 +599,7 @@ public class LocaleManager{
                 return false;
             }
         }
-        Bukkit.getLogger().severe("LocaleLib received invalid Bukkit version " + bukkitVersion);
+        Bukkit.getLogger().severe("[LocaleLib] Received invalid Bukkit version " + bukkitVersion);
         return false;
     }
 }
