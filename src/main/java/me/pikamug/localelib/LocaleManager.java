@@ -116,7 +116,7 @@ public class LocaleManager{
         if (player == null || itemStack == null) {
             return false;
         }
-        if (!hasBasePotionData) {
+        if (!hasBasePotionData && itemStack.getType().equals(Material.POTION)) {
             final Potion potion = Potion.fromItemStack(itemStack);
             String msg = message;
             if (potion.isSplash()) {
