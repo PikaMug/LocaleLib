@@ -24,35 +24,28 @@
 
 package me.pikamug.localelib;
 
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.apache.commons.lang.NullArgumentException;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.data.Ageable;
 import org.bukkit.enchantments.Enchantment;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Ocelot;
-import org.bukkit.entity.Player;
-import org.bukkit.entity.Rabbit;
-import org.bukkit.entity.TropicalFish;
-import org.bukkit.entity.Villager;
+import org.bukkit.entity.*;
 import org.bukkit.entity.Villager.Profession;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.potion.Potion;
+
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @SuppressWarnings("unused")
 public class LocaleManager{
@@ -70,7 +63,7 @@ public class LocaleManager{
     private final Map<String, String> oldLingeringPotions = LocaleKeys.getLingeringPotionKeys();
     private final Map<String, String> oldSplashPotions = LocaleKeys.getSplashPotionKeys();
     private final Map<String, String> oldEntities = LocaleKeys.getEntityKeys();
-    private Properties englishTranslations;
+    private Map<String, String> englishTranslations;
     
     public LocaleManager() {
         oldVersion = isBelow113();
@@ -99,6 +92,9 @@ public class LocaleManager{
         }
         try {
             englishTranslations = LocaleKeys.loadTranslations();
+            if (englishTranslations.isEmpty()) {
+                Bukkit.getLogger().warning("The English locale couldn't be found or loaded!");
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -496,8 +492,8 @@ public class LocaleManager{
      * @param key the raw key for the object name
      * @return the display name of the specified key within the server locale file
      */
-    public String toServerLocale(final String key) throws IllegalAccessException, InvocationTargetException {
-        return englishTranslations.getProperty(key);
+    public String toServerLocale(final String key) {
+        return englishTranslations.getOrDefault(key, "<none>");
     }
 
 

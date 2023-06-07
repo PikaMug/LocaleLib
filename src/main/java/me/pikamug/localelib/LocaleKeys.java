@@ -24,13 +24,19 @@
 
 package me.pikamug.localelib;
 
-import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.Bukkit;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Properties;
 
 public class LocaleKeys {
     public static LinkedHashMap<String, String> getBlockKeys() {
@@ -1006,14 +1012,71 @@ public class LocaleKeys {
      * @return Properties object consisting of the english translations
      * @throws IOException if an error occurred when reading from lang file
      */
-    public static Properties loadTranslations() throws IOException {
-        final ClassLoader classLoader = JavaPlugin.class.getClassLoader();
-        InputStream inputStream = classLoader.getResourceAsStream("assets/minecraft/lang/en_us.json");
-        if (inputStream == null) {
-            inputStream = classLoader.getResourceAsStream("assets/minecraft/lang/en_US.lang");
+    public static Map<String, String> loadTranslations() throws IOException {
+        final ClassLoader classLoader = SystemResourcesUtil.getContextClassLoader();
+        Iterator<String> matchingResources = SystemResourcesUtil.findResourcesBySearch(classLoader,"assets/minecraft/lang/", ".+(\\.json|\\.lang)");
+
+        Map<String, String> dictionary = new HashMap<>();
+        while (matchingResources.hasNext()) {
+            String resource = matchingResources.next();
+            try (InputStream inputStream = classLoader.getResourceAsStream(resource)) {
+                if (resource.endsWith(".json")) {
+                    dictionary = loadJsonFile(inputStream);
+                } else if (resource.endsWith(".lang")) {
+                    dictionary = loadLangFile(inputStream);
+                } else {
+                    dictionary = new HashMap<>();
+                }
+            }
         }
-        final Properties properties = new Properties();
-        properties.load(inputStream);
-        return properties;
+        return dictionary;
+    }
+
+    public static HashMap<String, String> loadJsonFile(InputStream inputStream) {
+        Bukkit.getLogger().info("Loading locales from json...");
+        HashMap<String, String> map = new HashMap<>();
+        try {
+            JSONParser parser = new JSONParser();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            JSONObject json = (JSONObject) parser.parse(reader);
+
+            for (Object key : json.keySet()) {
+                String keyStr = (String) key;
+                String valueStr = (String) json.get(keyStr);
+                map.put(keyStr, valueStr);
+            }
+        } catch (IOException | ParseException e) {
+            e.printStackTrace();
+        }
+        Bukkit.getLogger().info("Finished loading locales from json, "+map.size()+" entries loaded!");
+        return map;
+    }
+
+    public static HashMap<String, String> loadLangFile(InputStream inputStream) {
+        Bukkit.getLogger().info("Loading locales from lang...");
+        HashMap<String, String> map = new HashMap<>();
+        try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                if (line.trim().startsWith("##") || line.trim().isEmpty()) {
+                    continue;
+                }
+
+                String[] parts = line.split("=", 2);
+                if (parts.length >= 2) {
+                    String key = parts[0];
+                    String value = parts[1];
+                    map.put(key, value);
+                } else {
+                    System.out.println("ignoring line: " + line);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Bukkit.getLogger().info("Finished loading locales from lang, "+map.size()+" entries loaded!");
+        return map;
     }
 }
