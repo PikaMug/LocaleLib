@@ -396,6 +396,7 @@ public class LocaleManager{
                 }
             } else {
                 final ItemStack i = new ItemStack(material, 1, durability);
+                i.setItemMeta(meta);
                 if (durability >= 0 && i.getItemMeta() instanceof PotionMeta) {
                     if (hasBasePotionData) {
                         if (material.equals(Material.POTION)) {
