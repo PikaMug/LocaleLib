@@ -461,7 +461,7 @@ public class LocaleManager{
         } else {
             for (final Enchantment e : enchantments.keySet()) {
                 final String str = e.toString();
-                enchantKeys.put(e, "enchantment.minecraft." + str.substring(str.indexOf(":") + 1, str.indexOf(",")));
+                enchantKeys.put(e, "enchantment.minecraft." + str.substring(str.indexOf(":") + 1, str.indexOf("]")).split(", ")[0]);
             }
         }
         return enchantKeys;
