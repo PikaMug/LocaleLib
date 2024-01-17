@@ -1,6 +1,6 @@
 name: LocaleLib
 main: me.pikamug.localelib.LocaleLib
-version: 3.6
+version: 3.7
 api-version: 1.13
 description: Show translated names of items, entities & more in client's language
 website: https://github.com/PikaMug/LocaleLib
