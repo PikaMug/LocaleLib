@@ -79,13 +79,20 @@ public class LocaleManager{
             // Bukkit version is 1.18+ (for NMS Item#getName)
             isPost1dot18 = true;
         }
-        final String version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
+        final String packageName = Bukkit.getServer().getClass().getPackage().getName();
         try {
-            craftMagicNumbers = Class.forName("org.bukkit.craftbukkit.{v}.util.CraftMagicNumbers".replace("{v}", version));
-            if (hasRepackagedNms) {
-                itemClazz = Class.forName("net.minecraft.world.item.Item");
+            if (packageName.equals("org.bukkit.craftbukkit")) {
+                // Bukkit version is 1.20.5+
+                craftMagicNumbers = Class.forName("org.bukkit.craftbukkit.util.CraftMagicNumbers");
             } else {
-                itemClazz = Class.forName("net.minecraft.server.{v}.Item".replace("{v}", version));
+                final String version = packageName.split("\\.")[3];
+                craftMagicNumbers = Class.forName("org.bukkit.craftbukkit.{v}.util.CraftMagicNumbers".replace("{v}",
+                        version));
+                if (hasRepackagedNms) {
+                    itemClazz = Class.forName("net.minecraft.world.item.Item");
+                } else {
+                    itemClazz = Class.forName("net.minecraft.server.{v}.Item".replace("{v}", version));
+                }
             }
         } catch (final ClassNotFoundException e) {
             e.printStackTrace();
@@ -129,7 +136,8 @@ public class LocaleManager{
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + formatName(player) + " [\"" + msg + "\"]");
             return true;
         }
-        return sendMessage(player, message, itemStack.getType(), itemStack.getDurability(), itemStack.getEnchantments(), itemStack.getItemMeta());
+        return sendMessage(player, message, itemStack.getType(), itemStack.getDurability(), itemStack.getEnchantments(),
+                itemStack.getItemMeta());
     }
     
     /**
@@ -461,7 +469,8 @@ public class LocaleManager{
         } else {
             for (final Enchantment e : enchantments.keySet()) {
                 final String str = e.toString();
-                enchantKeys.put(e, "enchantment.minecraft." + str.substring(str.indexOf(":") + 1, str.indexOf("]")).split(", ")[0]);
+                enchantKeys.put(e, "enchantment.minecraft." + str.substring(str.indexOf(":") + 1,
+                        str.indexOf("]")).split(", ")[0]);
             }
         }
         return enchantKeys;
