@@ -84,6 +84,7 @@ public class LocaleManager{
             if (packageName.equals("org.bukkit.craftbukkit")) {
                 // Bukkit version is 1.20.5+
                 craftMagicNumbers = Class.forName("org.bukkit.craftbukkit.util.CraftMagicNumbers");
+                itemClazz = Class.forName("net.minecraft.world.item.Item");
             } else {
                 final String version = packageName.split("\\.")[3];
                 craftMagicNumbers = Class.forName("org.bukkit.craftbukkit.{v}.util.CraftMagicNumbers".replace("{v}",
