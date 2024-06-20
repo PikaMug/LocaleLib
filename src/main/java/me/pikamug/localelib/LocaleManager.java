@@ -442,8 +442,7 @@ public class LocaleManager{
                                 .replace("instant_heal", "healing").replace("instant_damage", "harming");
                     }
                 } catch (final Exception ex) {
-                    ex.printStackTrace();
-                    throw new IllegalArgumentException("[LocaleLib] Unable to query Material: " + material.name());
+                    throw new IllegalArgumentException("[LocaleLib] Unable to query Material: " + material.name(), ex);
                 }
             }
         }
