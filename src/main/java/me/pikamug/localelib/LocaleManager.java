@@ -64,7 +64,7 @@ public class LocaleManager{
     private final Map<String, String> oldSplashPotions = LocaleKeys.getSplashPotionKeys();
     private final Map<String, String> oldEntities = LocaleKeys.getEntityKeys();
     private Map<String, String> englishTranslations;
-    
+
     public LocaleManager() {
         oldVersion = isBelow113();
         if (Material.getMaterial("LINGERING_POTION") != null) {
@@ -140,18 +140,18 @@ public class LocaleManager{
         return sendMessage(player, message, itemStack.getType(), itemStack.getDurability(), itemStack.getEnchantments(),
                 itemStack.getItemMeta());
     }
-    
+
     /**
      * Send message with item name translated to the client's locale.
      * Material is required. Durability arg is arbitrary for 1.13+
      * and can be ignored by setting to a value less than 0.
      * Enchantments & meta are optional and may be left null or empty,
      * but note that most Potions use meta for 1.13+.<p>
-     * 
+     *
      * Message should contain {@code <item>} string for replacement by
-     * this method (along with applicable {@code <enchantment>} and/or 
+     * this method (along with applicable {@code <enchantment>} and/or
      * {@code <level>} strings).
-     * 
+     *
      * @param player The player whom the message is to be sent to
      * @param message The message to be sent to the player
      * @param material Material for the item being translated
@@ -159,7 +159,7 @@ public class LocaleManager{
      * @param enchantments Enchantments for the item being translated
      * @param meta ItemMeta for the item being translated
      */
-    public boolean sendMessage(final Player player, final String message, final Material material, final short durability, 
+    public boolean sendMessage(final Player player, final String message, final Material material, final short durability,
            Map<Enchantment, Integer> enchantments, final ItemMeta meta) {
         if (player == null || material == null) {
             return false;
@@ -186,17 +186,17 @@ public class LocaleManager{
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + formatName(player) + " [\"" + msg + "\"]");
         return true;
     }
-    
+
     /**
      * Send message with item name translated to the client's locale.
      * Material is required. Durability arg is arbitrary for 1.13+
      * and can be ignored by setting to a value less than 0.
      * Enchantments are optional and may be left null or empty.<p>
-     * 
+     *
      * Message should contain {@code <item>} string for replacement by
-     * this method (along with applicable {@code <enchantment>} and/or 
+     * this method (along with applicable {@code <enchantment>} and/or
      * {@code <level>} strings).
-     * 
+     *
      * @param player The player whom the message is to be sent to
      * @param message The message to be sent to the player
      * @param material Material for the item being translated
@@ -207,15 +207,15 @@ public class LocaleManager{
             final Map<Enchantment, Integer> enchantments) {
         return sendMessage(player, message, material, durability, enchantments, null);
     }
-    
+
     /**
      * Send message with enchantments translated to the client's locale.
      * Map of Enchantment+level is required.
-     * 
+     *
      * Message should contain {@code <item>} string for replacement by
-     * this method (along with applicable {@code <enchantment>} and/or 
+     * this method (along with applicable {@code <enchantment>} and/or
      * {@code <level>} strings).
-     * 
+     *
      * @param player The player whom the message is to be sent to
      * @param message The message to be sent to the player
      * @param enchantments Enchantments for the item being translated
@@ -238,14 +238,14 @@ public class LocaleManager{
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + formatName(player) + " [\"" + msg + "\"]");
         return true;
     }
-    
+
     /**
      * Send message with entity name translated to the client's locale.
      * EntityType is required.<p>
-     * 
-     * Message should contain {@code <mob>}string for replacement by 
+     *
+     * Message should contain {@code <mob>}string for replacement by
      * this method.
-     * 
+     *
      * @param player The player whom the message is to be sent to
      * @param message The message to be sent to the player
      * @param type The entity type to be translated
@@ -365,10 +365,10 @@ public class LocaleManager{
         }
         return queryMaterial(itemStack.getType(), itemStack.getDurability(), itemStack.getItemMeta());
     }
-    
+
     /**
      * Gets the key name of the specified material as it would appear in a Minecraft lang file.
-     * 
+     *
      * @param material the material to check
      * @return the raw key
      * @throws IllegalArgumentException if an item with that material could not be found
@@ -376,10 +376,10 @@ public class LocaleManager{
     public String queryMaterial(final Material material) throws IllegalArgumentException {
         return queryMaterial(material, (short) 0, null);
     }
-    
+
     /**
      * Gets the key name of the specified material as it would appear in a Minecraft lang file.
-     * 
+     *
      * @param material the material to check
      * @param durability the durability to check
      * @param meta the item meta data to check
@@ -435,7 +435,7 @@ public class LocaleManager{
                     if (item == null) {
                         throw new IllegalArgumentException(material.name() + " material could not be queried!");
                     }
-                    matKey = (String) itemClazz.getMethod(isPost1dot18 ? "a" : "getName").invoke(item);
+                    matKey = (String) resolveMethod(itemClazz, "getDescriptionId", "a", "getName").invoke(item);
                     if (meta instanceof PotionMeta) {
                         matKey += ".effect." + ((PotionMeta)meta).getBasePotionData().getType().name().toLowerCase()
                                 .replace("regen", "regeneration").replace("speed", "swiftness").replace("jump", "leaping")
@@ -448,10 +448,23 @@ public class LocaleManager{
         }
         return matKey;
     }
-    
+
+    private static Method resolveMethod(Class<?> clazz, String... mappings) {
+        for (String mapping : mappings) {
+            try {
+                Method declaredMethod = clazz.getDeclaredMethod(mapping);
+                declaredMethod.setAccessible(true);
+                return declaredMethod;
+            } catch (NoSuchMethodException e) {
+                // Do nothing
+            }
+        }
+        return null;
+    }
+
     /**
      * Gets the key name of the specified enchantments as it would appear in a Minecraft lang file.
-     * 
+     *
      * @param enchantments Enchantments to get the keys of
      * @return the raw keys of the enchantments
      */
@@ -475,10 +488,10 @@ public class LocaleManager{
         }
         return enchantKeys;
     }
-    
+
     /**
      * Gets the key name of the specified enchantment levels as it would appear in a Minecraft lang file.
-     * 
+     *
      * @param enchantments Enchantment levels to get the keys of
      * @return the raw keys of the enchantment levels
      */
@@ -492,10 +505,10 @@ public class LocaleManager{
         }
         return lvlKeys;
     }
-    
+
     /**
      * Gets the display name of the specified material as it would appear in a Minecraft lang file.
-     * 
+     *
      * @param key the raw key for the object name
      * @return the display name of the specified key within the server locale file
      */
@@ -548,7 +561,7 @@ public class LocaleManager{
 
     /**
      * Checks whether the server's Bukkit version supports use of the ItemMeta#getBasePotionData method.
-     * 
+     *
      * @return true if Bukkit version is at 1.9 or above
      */
     public boolean hasBasePotionData() {
@@ -563,16 +576,16 @@ public class LocaleManager{
     public boolean hasRepackagedNms() {
         return hasRepackagedNms;
     }
-    
+
     /**
      * Checks whether the server's Bukkit version is below 1.13.
-     * 
+     *
      * @return true if Bukkit version is at 1.12.2 or below
      */
     public boolean isBelow113() {
         return _isBelow113(Bukkit.getServer().getBukkitVersion().split("-")[0]);
     }
-    
+
     private boolean _isBelow113(final String bukkitVersion) {
         if (bukkitVersion.matches("^[0-9.]+$")) {
             switch(bukkitVersion) {
