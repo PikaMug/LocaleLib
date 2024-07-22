@@ -24,7 +24,6 @@
 
 package me.pikamug.localelib;
 
-import org.apache.commons.lang.NullArgumentException;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -39,7 +38,6 @@ import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.potion.Potion;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.HashMap;
@@ -266,11 +264,11 @@ public class LocaleManager{
      *
      * @param entity the entity to check
      * @return the raw key
-     * @throws NullArgumentException if specified entity parameter is null
+     * @throws IllegalArgumentException if specified entity parameter is null
      */
-    public String queryEntity(final Entity entity) throws NullArgumentException {
+    public String queryEntity(final Entity entity) throws IllegalArgumentException {
         if (entity == null) {
-            throw new NullArgumentException("[LocaleLib] Entity cannot be null");
+            throw new IllegalArgumentException("[LocaleLib] Entity cannot be null");
         }
         String extra = null;
         if (entity instanceof Villager) {
@@ -301,11 +299,11 @@ public class LocaleManager{
      * @param entityType the entity type to check
      * @param extra the extra data to check, i.e. name of Profession
      * @return the raw key
-     * @throws NullArgumentException if specified entity type parameter is null
+     * @throws IllegalArgumentException if specified entity type parameter is null
      */
-    public String queryEntityType(final EntityType entityType, final String extra) throws NullArgumentException {
+    public String queryEntityType(final EntityType entityType, final String extra) throws IllegalArgumentException {
         if (entityType == null) {
-            throw new NullArgumentException("[LocaleLib] EntityType cannot be null");
+            throw new IllegalArgumentException("[LocaleLib] EntityType cannot be null");
         }
         String key = "";
         if (oldVersion) {
@@ -356,12 +354,12 @@ public class LocaleManager{
      *
      * @param itemStack the item to check
      * @return the raw key
-     * @throws NullArgumentException if specified item parameter is null
+     * @throws IllegalArgumentException if specified item parameter is null
      */
     @SuppressWarnings("deprecation")
-    public String queryItemStack(final ItemStack itemStack) throws NullArgumentException {
+    public String queryItemStack(final ItemStack itemStack) throws IllegalArgumentException {
         if (itemStack == null) {
-            throw new NullArgumentException("[LocaleLib] ItemStack cannot be null");
+            throw new IllegalArgumentException("[LocaleLib] ItemStack cannot be null");
         }
         return queryMaterial(itemStack.getType(), itemStack.getDurability(), itemStack.getItemMeta());
     }
@@ -384,14 +382,13 @@ public class LocaleManager{
      * @param durability the durability to check
      * @param meta the item meta data to check
      * @return the raw key
-     * @throws IllegalArgumentException if an item with that material and durability could not be found
-     * @throws NullArgumentException if the specified material parameter is null
+     * @throws IllegalArgumentException if the specified material parameter is null or item/block cannot be found
      */
     @SuppressWarnings("deprecation")
     public String queryMaterial(final Material material, final short durability, final ItemMeta meta)
-            throws IllegalArgumentException, NullArgumentException {
+            throws IllegalArgumentException {
         if (material == null) {
-            throw new NullArgumentException("[LocaleLib] Material cannot be null");
+            throw new IllegalArgumentException("[LocaleLib] Material cannot be null");
         }
         String matKey = "";
         if (oldVersion) {
