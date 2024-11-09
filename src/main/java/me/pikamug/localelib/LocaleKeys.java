@@ -1019,6 +1019,13 @@ public class LocaleKeys {
         Map<String, String> dictionary = new HashMap<>();
         while (matchingResources.hasNext()) {
             String resource = matchingResources.next();
+
+            if (resource.endsWith("_all.json")
+                || resource.endsWith("_list.json")
+                || resource.endsWith("deprecated.json")) {
+                continue;
+            }
+
             try (InputStream inputStream = classLoader.getResourceAsStream(resource)) {
                 if (resource.endsWith(".json")) {
                     dictionary = loadJsonFile(inputStream);
