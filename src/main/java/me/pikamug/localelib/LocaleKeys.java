@@ -1051,8 +1051,11 @@ public class LocaleKeys {
 
             for (Object key : json.keySet()) {
                 String keyStr = (String) key;
-                String valueStr = (String) json.get(keyStr);
-                map.put(keyStr, valueStr);
+
+                if(json.get(keyStr) instanceof String) {
+                    String valueStr = (String) json.get(keyStr);
+                    map.put(keyStr, valueStr);
+                }
             }
         } catch (IOException | ParseException e) {
             e.printStackTrace();
