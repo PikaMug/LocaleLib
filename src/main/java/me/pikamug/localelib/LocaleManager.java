@@ -167,6 +167,7 @@ public class LocaleManager{
             matKey = queryMaterial(material, durability, meta);
         } catch (final Exception ex) {
             Bukkit.getLogger().severe("[LocaleLib] Unable to query Material: " + material.name());
+            ex.printStackTrace();
             return false;
         }
         if (meta instanceof EnchantmentStorageMeta) {
