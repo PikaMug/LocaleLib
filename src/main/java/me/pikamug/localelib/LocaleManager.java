@@ -427,17 +427,24 @@ public class LocaleManager{
                 matKey = "block.minecraft." + material.name().toLowerCase();
             } else {
                 try {
-                    final Method m = craftMagicNumbers.getDeclaredMethod("getItem", material.getClass());
-                    m.setAccessible(true);
-                    final Object item = m.invoke(craftMagicNumbers, material);
+                    final Method itemMethod = craftMagicNumbers.getDeclaredMethod("getItem", material.getClass());
+                    itemMethod.setAccessible(true);
+                    final Object item = itemMethod.invoke(craftMagicNumbers, material);
                     if (item == null) {
                         throw new IllegalArgumentException(material.name() + " material could not be queried!");
                     }
-                    matKey = (String) resolveMethod(itemClazz, "getDescriptionId", "a", "getName", "j", "l").invoke(item);
+                    final Method keyMethod = resolveMethod(itemClazz, "getDescriptionId", "a", "getName", "j", "l");
+                    if (keyMethod == null) {
+                        throw new IllegalArgumentException("Could not get description ID for " + itemClazz.getName());
+                    }
+                    matKey = (String) keyMethod.invoke(item);
                     if (meta instanceof PotionMeta) {
                         matKey += ".effect." + ((PotionMeta)meta).getBasePotionData().getType().name().toLowerCase()
-                                .replace("regen", "regeneration").replace("speed", "swiftness").replace("jump", "leaping")
+                                .replace("speed", "swiftness").replace("jump", "leaping")
                                 .replace("instant_heal", "healing").replace("instant_damage", "harming");
+                        if (!matKey.contains("regeneration")) {
+                            matKey = matKey.replace("regen", "regeneration");
+                        }
                     }
                 } catch (final Exception ex) {
                     throw new IllegalArgumentException("[LocaleLib] Unable to query Material: " + material.name(), ex);
