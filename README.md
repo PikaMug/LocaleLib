@@ -11,7 +11,7 @@
 Download
 ---
 
-Available for download on SpigotMC: https://www.spigotmc.org/resources/localelib.65617/
+Available for download on Modrinth: https://modrinth.com/plugin/localelib
 
 Usage
 ---
