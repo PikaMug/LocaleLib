@@ -592,7 +592,7 @@ public class LocaleManager{
     }
 
     private boolean _isBelow113(final String bukkitVersion) {
-        if (bukkitVersion.matches("^[0-9.]+$")) {
+        if (bukkitVersion.matches("^[0-9A-Za-z]+(\\.[0-9A-Za-z]+)*$")) {
             switch(bukkitVersion) {
             case "1.12.2" :
             case "1.12.1" :
