@@ -328,13 +328,18 @@ public class LocaleManager{
         }
         String key = "";
         if (oldVersion) {
-            if (entityType.name().equals("VILLAGER") && extra != null && Profession.valueOf(extra) != null) {
-                key = oldEntities.get(entityType.name() + "." + Profession.valueOf(extra).name());
-            } else if (entityType.name().equals("OCELOT") && extra != null && Ocelot.Type.valueOf(extra) != null) {
-                key = oldEntities.get(entityType.name() + "." + Ocelot.Type.valueOf(extra).name());
-            } else if (entityType.name().equals("RABBIT") && extra != null && Rabbit.Type.valueOf(extra) != null
-                    && Rabbit.Type.valueOf(extra).equals(Rabbit.Type.THE_KILLER_BUNNY)) {
-                key = oldEntities.get(entityType.name() + "." + Rabbit.Type.valueOf(extra).name());
+            final Profession profession = entityType.name().equals("VILLAGER")
+                    ? safeValueOf(Profession.class, extra) : null;
+            final Ocelot.Type ocelotType = entityType.name().equals("OCELOT")
+                    ? safeValueOf(Ocelot.Type.class, extra) : null;
+            final Rabbit.Type rabbitType = entityType.name().equals("RABBIT")
+                    ? safeValueOf(Rabbit.Type.class, extra) : null;
+            if (profession != null) {
+                key = oldEntities.get(entityType.name() + "." + profession.name());
+            } else if (ocelotType != null) {
+                key = oldEntities.get(entityType.name() + "." + ocelotType.name());
+            } else if (rabbitType == Rabbit.Type.THE_KILLER_BUNNY) {
+                key = oldEntities.get(entityType.name() + "." + rabbitType.name());
             } else {
                 key = oldEntities.get(entityType.name());
             }
@@ -345,29 +350,56 @@ public class LocaleManager{
                 key = "entity.minecraft.snow_golem";
             } else if (entityType.name().equals("PIG_ZOMBIE")) {
                 key = "entity.minecraft.zombie_pigman";
-            } else if (entityType.name().equals("VILLAGER") && extra != null && Profession.valueOf(extra) != null) {
-                key = "entity.minecraft.villager." + Profession.valueOf(extra).name();
-            } else if (entityType.name().equals("RABBIT") && extra != null && Rabbit.Type.valueOf(extra) != null
-                    && Rabbit.Type.valueOf(extra).equals(Rabbit.Type.THE_KILLER_BUNNY)) {
-                key = "entity.minecraft.killer_bunny";
-            } else if (entityType.name().equals("TROPICAL_FISH") && extra != null) {
-                if (TropicalFish.Pattern.valueOf(extra) != null) {
-                    key = "entity.minecraft.tropical_fish.type." + TropicalFish.Pattern.valueOf(extra);
-                } else {
+            } else if (entityType.name().equals("VILLAGER")) {
+                final Profession profession = safeValueOf(Profession.class, extra);
+                key = profession != null ? "entity.minecraft.villager." + profession.name()
+                        : "entity.minecraft.villager";
+            } else if (entityType.name().equals("RABBIT")) {
+                final Rabbit.Type rabbitType = safeValueOf(Rabbit.Type.class, extra);
+                key = rabbitType == Rabbit.Type.THE_KILLER_BUNNY ? "entity.minecraft.killer_bunny"
+                        : "entity.minecraft.rabbit";
+            } else if (entityType.name().equals("TROPICAL_FISH")) {
+                final TropicalFish.Pattern pattern = safeValueOf(TropicalFish.Pattern.class, extra);
+                if (pattern != null) {
+                    key = "entity.minecraft.tropical_fish.type." + pattern;
+                } else if (extra != null) {
                     try {
-                        int value = Integer.parseInt(extra);
+                        final int value = Integer.parseInt(extra);
                         if (value >= 0 && value < 22) {
                             key = "entity.minecraft.tropical_fish.predefined." + extra;
                         }
-                    } catch (NumberFormatException nfe) {
+                    } catch (final NumberFormatException nfe) {
                         // Do nothing
                     }
+                }
+                if (key.isEmpty()) {
+                    key = "entity.minecraft.tropical_fish";
                 }
             } else {
                 key = "entity.minecraft." + entityType.toString().toLowerCase();
             }
         }
         return key;
+    }
+
+    /**
+     * Safely resolves an enum constant by name, returning {@code null} instead of throwing when the
+     * name doesn't match any constant of the given enum (unlike {@link Enum#valueOf(Class, String)}).
+     *
+     * @param enumClass the enum type to resolve against
+     * @param name the constant name to look up, may be null
+     * @param <T> the enum type
+     * @return the matching enum constant, or null if name is null or doesn't match
+     */
+    private static <T extends Enum<T>> T safeValueOf(final Class<T> enumClass, final String name) {
+        if (name == null) {
+            return null;
+        }
+        try {
+            return Enum.valueOf(enumClass, name);
+        } catch (final IllegalArgumentException ex) {
+            return null;
+        }
     }
 
     /**
