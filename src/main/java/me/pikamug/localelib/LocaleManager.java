@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("unused")
@@ -60,6 +61,7 @@ public class LocaleManager{
     private final Map<String, String> oldEntities = LocaleKeys.getEntityKeys();
     private Map<String, String> englishTranslations;
     private final LocaleParser localeParser = new LocaleParser();
+    private final ComponentMessenger messenger = createMessenger();
 
     public LocaleManager() {
         oldVersion = isBelow113();
@@ -102,6 +104,51 @@ public class LocaleManager{
     }
 
     /**
+     * Chooses how to send formatted chat components: real Adventure
+     * ({@link AdventureComponentMessenger}) if this server supports it (Paper and its forks),
+     * otherwise the BungeeCord Chat API ({@link BungeeComponentMessenger}), which every
+     * Spigot-API-based server has bundled since 1.13.
+     *
+     * <p>{@code AdventureComponentMessenger} is loaded only via reflection, and only after
+     * {@link #isAdventureSupported()} - which references no Adventure type itself - has confirmed
+     * support. This ordering means the JVM never attempts to resolve Adventure's classes on a
+     * server that doesn't have them. Do not change this to a direct
+     * {@code new AdventureComponentMessenger()}; that would defeat the whole point.
+     *
+     * @return the messenger to use for the lifetime of this LocaleManager instance
+     */
+    private static ComponentMessenger createMessenger() {
+        if (isAdventureSupported()) {
+            try {
+                return (ComponentMessenger) Class.forName("me.pikamug.localelib.AdventureComponentMessenger")
+                        .getDeclaredConstructor().newInstance();
+            } catch (final ReflectiveOperationException | LinkageError e) {
+                Bukkit.getLogger().warning("[LocaleLib] Adventure appears to be supported but the Adventure "
+                        + "messenger could not be loaded; falling back to BungeeCord chat components. " + e);
+            }
+        }
+        return new BungeeComponentMessenger();
+    }
+
+    /**
+     * Checks, without referencing any Adventure type directly, whether the running server's
+     * {@code Player} class implements {@code net.kyori.adventure.audience.Audience}. True on
+     * Paper and its forks; false on plain Spigot/CraftBukkit, where Adventure isn't on the
+     * classpath at all.
+     *
+     * @return true if this server's Player implementation supports Adventure
+     */
+    private static boolean isAdventureSupported() {
+        try {
+            final Class<?> audienceClass = Class.forName("net.kyori.adventure.audience.Audience");
+            final Class<?> playerClass = Class.forName("org.bukkit.entity.Player");
+            return audienceClass.isAssignableFrom(playerClass);
+        } catch (final ClassNotFoundException | LinkageError e) {
+            return false;
+        }
+    }
+
+    /**
      * Send message with item name translated to the client's locale.
      * ItemStack is required. This method supports 1.8 potions.<p>
      *
@@ -129,9 +176,9 @@ public class LocaleManager{
             if (potion.getType().getEffectType() != null) {
                 potionName = oldPotions1dot8.get(potion.getType().getEffectType().getName());
             }
-            final String json = localeParser.buildTellrawJson(msg, new String[]{"<prefix>", "<item>"},
+            final List<MessageSegment> segments = localeParser.parseSegments(msg, new String[]{"<prefix>", "<item>"},
                     new String[]{prefixKey, potionName});
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + formatName(player) + " " + json);
+            messenger.send(player, segments);
             return true;
         }
         return sendMessage(player, message, itemStack.getType(), itemStack.getDurability(), itemStack.getEnchantments(),
@@ -191,8 +238,7 @@ public class LocaleManager{
             translateKeys[idx] = lk;
             idx++;
         }
-        final String json = localeParser.buildTellrawJson(convertedMessage, placeholders, translateKeys);
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + formatName(player) + " " + json);
+        messenger.send(player, localeParser.parseSegments(convertedMessage, placeholders, translateKeys));
         return true;
     }
 
@@ -251,8 +297,7 @@ public class LocaleManager{
                 translateKeys[idx] = lk;
                 idx++;
             }
-            final String json = localeParser.buildTellrawJson(convertedMessage, placeholders, translateKeys);
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + formatName(player) + " " + json);
+            messenger.send(player, localeParser.parseSegments(convertedMessage, placeholders, translateKeys));
         }
         return true;
     }
@@ -275,8 +320,7 @@ public class LocaleManager{
         }
         final String convertedMessage = localeParser.convertFormattingTokens(message);
         final String key = queryEntityType(type, extra);
-        final String json = localeParser.buildTellrawJson(convertedMessage, new String[]{"<mob>"}, new String[]{key});
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + formatName(player) + " " + json);
+        messenger.send(player, localeParser.parseSegments(convertedMessage, new String[]{"<mob>"}, new String[]{key}));
         return true;
     }
 
@@ -539,21 +583,6 @@ public class LocaleManager{
      */
     public String toServerLocale(final String key) {
         return englishTranslations.getOrDefault(key, "<none>");
-    }
-
-    /**
-     * Format player name according to server's Bukkit version
-     *
-     * @param player Player whose name to format
-     * @return Formatted name
-     */
-    private String formatName(Player player) {
-        if (!isBelow113()) {
-            // Better Geyser/Floodgate compatibility
-            return "\"" + player.getName() + "\"";
-        } else {
-            return player.getName();
-        }
     }
 
     /**

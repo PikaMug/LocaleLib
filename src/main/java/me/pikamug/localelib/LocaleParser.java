@@ -1,5 +1,7 @@
 package me.pikamug.localelib;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -17,7 +19,7 @@ public class LocaleParser {
      */
     public String convertFormattingTokens(final String message) {
         String result = message;
-        // Convert %#RRGGBB% to §x§R§R§G§G§B§B
+        // Convert %#RRGGBB% to \u00A7x\u00A7R\u00A7R\u00A7G\u00A7G\u00A7B\u00A7B
         final Matcher hexMatcher = hexTokenPattern.matcher(result);
         final StringBuffer hexSb = new StringBuffer();
         while (hexMatcher.find()) {
@@ -29,7 +31,7 @@ public class LocaleParser {
         }
         hexMatcher.appendTail(hexSb);
         result = hexSb.toString();
-        // Convert &#RRGGBB to §x§R§R§G§G§B§B
+        // Convert &#RRGGBB to \u00A7x\u00A7R\u00A7R\u00A7G\u00A7G\u00A7B\u00A7B
         final Matcher ampMatcher = ampHexPattern.matcher(result);
         final StringBuffer ampSb = new StringBuffer();
         while (ampMatcher.find()) {
@@ -44,19 +46,22 @@ public class LocaleParser {
     }
 
     /**
-     * Build a tellraw JSON array from a message containing section-sign formatting codes
-     * and placeholder strings. Hex colors ({@code §x§R§R§G§G§B§B}) are converted to
-     * proper JSON {@code "color":"#RRGGBB"} properties, and placeholders are converted
-     * to {@code {"translate":"key"}} components.
+     * Parse a message containing section-sign formatting codes and placeholder strings into an
+     * ordered list of {@link MessageSegment}s - either literal text runs or translatable
+     * placeholders, each carrying whatever formatting was active when it was encountered. This is
+     * the shared parsing core behind {@link #buildTellrawJson(String, String[], String[])} and the
+     * {@link ComponentMessenger} implementations, so the section-sign/hex-color/placeholder parsing
+     * logic lives in exactly one place.
      *
      * @param message the message with section-sign codes and placeholder strings
      * @param placeholders the placeholder strings to replace (e.g. {@code <item>})
      * @param translateKeys the corresponding translation keys for each placeholder
-     * @return a tellraw JSON array string
+     * @return an ordered list of parsed segments
      */
-    public String buildTellrawJson(String message, final String[] placeholders, final String[] translateKeys) {
-        final StringBuilder json = new StringBuilder("[");
-        final StringBuilder segment = new StringBuilder();
+    List<MessageSegment> parseSegments(final String message, final String[] placeholders,
+            final String[] translateKeys) {
+        final List<MessageSegment> segments = new ArrayList<>();
+        final StringBuilder text = new StringBuilder();
         int i = 0;
         String color = null;
         boolean bold = false;
@@ -64,47 +69,15 @@ public class LocaleParser {
         boolean underline = false;
         boolean strikethrough = false;
         boolean obfuscated = false;
-        boolean componentStarted = false;
         int placeholderIdx = 0;
 
         while (i < message.length()) {
             // Check for placeholder match
             if (placeholders != null && placeholderIdx < placeholders.length
                     && message.startsWith(placeholders[placeholderIdx], i)) {
-                // Flush current text segment
-                if (segment.length() > 0) {
-                    if (componentStarted) {
-                        json.append(",");
-                    }
-                    appendTextComponent(json, segment, color, bold, italic, underline, strikethrough, obfuscated);
-                    segment.setLength(0);
-                    componentStarted = true;
-                }
-                // Build translate component with inherited color
-                if (componentStarted) {
-                    json.append(",");
-                }
-                json.append("{\"translate\":\"").append(translateKeys[placeholderIdx]).append("\"");
-                if (color != null) {
-                    json.append(",\"color\":\"").append(color).append("\"");
-                }
-                if (bold) {
-                    json.append(",\"bold\":true");
-                }
-                if (italic) {
-                    json.append(",\"italic\":true");
-                }
-                if (underline) {
-                    json.append(",\"underline\":true");
-                }
-                if (strikethrough) {
-                    json.append(",\"strikethrough\":true");
-                }
-                if (obfuscated) {
-                    json.append(",\"obfuscated\":true");
-                }
-                json.append("}");
-                componentStarted = true;
+                flushText(segments, text, color, bold, italic, underline, strikethrough, obfuscated);
+                segments.add(new MessageSegment(true, translateKeys[placeholderIdx], color, bold, italic,
+                        underline, strikethrough, obfuscated));
                 i += placeholders[placeholderIdx].length();
                 placeholderIdx++;
                 continue;
@@ -114,7 +87,7 @@ public class LocaleParser {
                 final char code = Character.toLowerCase(message.charAt(i + 1));
 
                 if (code == 'x' && i + 13 < message.length()) {
-                    // Try to parse hex color: §x§R§R§G§G§B§B
+                    // Try to parse hex color: \u00A7x\u00A7R\u00A7R\u00A7G\u00A7G\u00A7B\u00A7B
                     boolean validHex = true;
                     for (int j = 2; j <= 13; j += 2) {
                         if (message.charAt(i + j) != '\u00A7') {
@@ -128,36 +101,21 @@ public class LocaleParser {
                         }
                     }
                     if (validHex) {
-                        // Flush current segment before color change
-                        if (segment.length() > 0) {
-                            if (componentStarted) {
-                                json.append(",");
-                            }
-                            appendTextComponent(json, segment, color, bold, italic, underline, strikethrough, obfuscated);
-                            segment.setLength(0);
-                            componentStarted = true;
-                        }
+                        flushText(segments, text, color, bold, italic, underline, strikethrough, obfuscated);
                         // Extract hex color
                         final StringBuilder hex = new StringBuilder("#");
                         for (int j = 0; j < 6; j++) {
                             hex.append(Character.toLowerCase(message.charAt(i + 3 + j * 2)));
                         }
                         color = hex.toString();
-                        i += 14; // Skip §x§R§R§G§G§B§B
+                        i += 14; // Skip \u00A7x\u00A7R\u00A7R\u00A7G\u00A7G\u00A7B\u00A7B
                     } else {
-                        segment.append(message.charAt(i));
+                        text.append(message.charAt(i));
                         i++;
                     }
                 } else if ((code >= '0' && code <= '9') || (code >= 'a' && code <= 'f')) {
                     // Standard color code: flush and update color
-                    if (segment.length() > 0) {
-                        if (componentStarted) {
-                            json.append(",");
-                        }
-                        appendTextComponent(json, segment, color, bold, italic, underline, strikethrough, obfuscated);
-                        segment.setLength(0);
-                        componentStarted = true;
-                    }
+                    flushText(segments, text, color, bold, italic, underline, strikethrough, obfuscated);
                     color = getMinecraftColorName(code);
                     i += 2;
                 } else if (code == 'l') {
@@ -177,14 +135,7 @@ public class LocaleParser {
                     i += 2;
                 } else if (code == 'r') {
                     // Reset: flush and clear all formatting
-                    if (segment.length() > 0) {
-                        if (componentStarted) {
-                            json.append(",");
-                        }
-                        appendTextComponent(json, segment, color, bold, italic, underline, strikethrough, obfuscated);
-                        segment.setLength(0);
-                        componentStarted = true;
-                    }
+                    flushText(segments, text, color, bold, italic, underline, strikethrough, obfuscated);
                     color = null;
                     bold = false;
                     italic = false;
@@ -193,56 +144,91 @@ public class LocaleParser {
                     obfuscated = false;
                     i += 2;
                 } else {
-                    segment.append(message.charAt(i));
+                    text.append(message.charAt(i));
                     i++;
                 }
             } else {
-                segment.append(message.charAt(i));
+                text.append(message.charAt(i));
                 i++;
             }
         }
 
-        // Flush remaining segment
-        if (segment.length() > 0) {
-            if (componentStarted) {
+        // Flush remaining text
+        flushText(segments, text, color, bold, italic, underline, strikethrough, obfuscated);
+        return segments;
+    }
+
+    /**
+     * Append the buffered text as a new segment (if non-empty) and clear the buffer.
+     */
+    private void flushText(final List<MessageSegment> segments, final StringBuilder text, final String color,
+            final boolean bold, final boolean italic, final boolean underline, final boolean strikethrough,
+            final boolean obfuscated) {
+        if (text.length() > 0) {
+            segments.add(new MessageSegment(false, text.toString(), color, bold, italic, underline,
+                    strikethrough, obfuscated));
+            text.setLength(0);
+        }
+    }
+
+    /**
+     * Build a tellraw JSON array from a message containing section-sign formatting codes
+     * and placeholder strings. Hex colors ({@code \u00A7x\u00A7R\u00A7R\u00A7G\u00A7G\u00A7B\u00A7B}) are converted to
+     * proper JSON {@code "color":"#RRGGBB"} properties, and placeholders are converted
+     * to {@code {"translate":"key"}} components.
+     *
+     * @param message the message with section-sign codes and placeholder strings
+     * @param placeholders the placeholder strings to replace (e.g. {@code <item>})
+     * @param translateKeys the corresponding translation keys for each placeholder
+     * @return a tellraw JSON array string
+     */
+    public String buildTellrawJson(final String message, final String[] placeholders, final String[] translateKeys) {
+        return segmentsToJson(parseSegments(message, placeholders, translateKeys));
+    }
+
+    private String segmentsToJson(final List<MessageSegment> segments) {
+        final StringBuilder json = new StringBuilder("[");
+        for (int i = 0; i < segments.size(); i++) {
+            if (i > 0) {
                 json.append(",");
             }
-            appendTextComponent(json, segment, color, bold, italic, underline, strikethrough, obfuscated);
+            appendSegmentJson(json, segments.get(i));
         }
-
         json.append("]");
         return json.toString();
     }
 
     /**
-     * Append a JSON text component to the builder for the given text segment.
+     * Append a JSON component for the given segment.
      */
-    private void appendTextComponent(final StringBuilder json, final StringBuilder text,
-            final String color, final boolean bold, final boolean italic,
-            final boolean underline, final boolean strikethrough, final boolean obfuscated) {
-        final String escaped = text.toString()
-                .replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\n", "\\n")
-                .replace("\t", "\\t")
-                .replace("\r", "\\r");
-        json.append("{\"text\":\"").append(escaped).append("\"");
-        if (color != null) {
-            json.append(",\"color\":\"").append(color).append("\"");
+    private void appendSegmentJson(final StringBuilder json, final MessageSegment segment) {
+        if (segment.isTranslatable()) {
+            json.append("{\"translate\":\"").append(segment.getContent()).append("\"");
+        } else {
+            final String escaped = segment.getContent()
+                    .replace("\\", "\\\\")
+                    .replace("\"", "\\\"")
+                    .replace("\n", "\\n")
+                    .replace("\t", "\\t")
+                    .replace("\r", "\\r");
+            json.append("{\"text\":\"").append(escaped).append("\"");
         }
-        if (bold) {
+        if (segment.getColor() != null) {
+            json.append(",\"color\":\"").append(segment.getColor()).append("\"");
+        }
+        if (segment.isBold()) {
             json.append(",\"bold\":true");
         }
-        if (italic) {
+        if (segment.isItalic()) {
             json.append(",\"italic\":true");
         }
-        if (underline) {
+        if (segment.isUnderline()) {
             json.append(",\"underline\":true");
         }
-        if (strikethrough) {
+        if (segment.isStrikethrough()) {
             json.append(",\"strikethrough\":true");
         }
-        if (obfuscated) {
+        if (segment.isObfuscated()) {
             json.append(",\"obfuscated\":true");
         }
         json.append("}");

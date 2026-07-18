@@ -27,6 +27,27 @@
             <version>1.13.2-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
+        <!-- Always present at runtime: spigot-api itself depends on bungeecord-chat, and every
+             Spigot/Paper/Purpur server since 1.13 bundles it. Declared explicitly here (rather than
+             relying on transitive/provided propagation from spigot-api) since it's now used directly
+             for building real chat components instead of hand-built tellraw JSON strings. -->
+        <dependency>
+            <groupId>net.md-5</groupId>
+            <artifactId>bungeecord-chat</artifactId>
+            <version>1.21-R0.4</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- Compile-only: only present at runtime on Paper and Paper forks (Purpur, etc.), never on
+             plain Spigot/CraftBukkit. Used solely inside AdventureComponentMessenger, which is only
+             ever loaded via reflection after confirming Adventure's presence at startup - see that
+             class for details on why this is safe on servers without it. Version matches what current
+             Paper builds bundle (paper-api build.gradle.kts pins adventureVersion = 4.26.1). -->
+        <dependency>
+            <groupId>net.kyori</groupId>
+            <artifactId>adventure-api</artifactId>
+            <version>4.26.1</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
     
     <build>
