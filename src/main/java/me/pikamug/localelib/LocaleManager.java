@@ -92,7 +92,12 @@ public class LocaleManager{
                 }
             }
         } catch (final ClassNotFoundException e) {
-            e.printStackTrace();
+            Bukkit.getLogger().severe("[LocaleLib] Unable to resolve NMS/CraftBukkit classes for this server "
+                    + "version: " + e.getMessage());
+        }
+        if (!oldVersion && (craftMagicNumbers == null || itemClazz == null)) {
+            Bukkit.getLogger().severe("[LocaleLib] This server version does not appear to be supported. "
+                    + "Material name translation will not work; entity and enchantment translation are unaffected.");
         }
         try {
             englishTranslations = LocaleKeys.loadTranslations();
@@ -446,6 +451,10 @@ public class LocaleManager{
             if (material.isBlock() && material.createBlockData() instanceof Ageable) {
                 matKey = "block.minecraft." + material.name().toLowerCase();
             } else {
+                if (craftMagicNumbers == null || itemClazz == null) {
+                    throw new IllegalArgumentException("[LocaleLib] Cannot query material '" + material.name()
+                            + "': NMS/CraftBukkit classes were not resolved for this server version at startup.");
+                }
                 try {
                     final Method itemMethod = craftMagicNumbers.getDeclaredMethod("getItem", material.getClass());
                     itemMethod.setAccessible(true);
