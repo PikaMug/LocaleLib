@@ -45,12 +45,12 @@ import java.util.Map;
 
 @SuppressWarnings("unused")
 public class LocaleManager{
-    private static Class<?> craftMagicNumbers = null;
-    private static Class<?> itemClazz = null;
-    private static boolean oldVersion = false;
-    private static boolean hasBasePotionData = false;
-    private static boolean hasRepackagedNms = false;
-    private static boolean isPost1dot18 = false;
+    private final Class<?> craftMagicNumbers;
+    private final Class<?> itemClazz;
+    private final boolean oldVersion;
+    private final boolean hasBasePotionData;
+    private final boolean hasRepackagedNms;
+    private final boolean isPost1dot18;
     private final Map<String, String> oldBlocks = LocaleKeys.getBlockKeys();
     private final Map<String, String> oldItems = LocaleKeys.getItemKeys();
     private final Map<String, String> oldPotions1dot8 = LocaleKeys.getPotionKeys1dot8();
@@ -63,37 +63,36 @@ public class LocaleManager{
 
     public LocaleManager() {
         oldVersion = isBelow113();
-        if (Material.getMaterial("LINGERING_POTION") != null) {
-            // Bukkit version is 1.9+
-            hasBasePotionData = true;
-        }
-        if (Material.getMaterial("AMETHYST_CLUSTER") != null) {
-            // Bukkit version is 1.17+
-            hasRepackagedNms = true;
-        }
-        if (Material.getMaterial("MUSIC_DISC_OTHERSIDE") != null) {
-            // Bukkit version is 1.18+ (for NMS Item#getName)
-            isPost1dot18 = true;
-        }
+        // Bukkit version is 1.9+
+        hasBasePotionData = Material.getMaterial("LINGERING_POTION") != null;
+        // Bukkit version is 1.17+
+        hasRepackagedNms = Material.getMaterial("AMETHYST_CLUSTER") != null;
+        // Bukkit version is 1.18+ (for NMS Item#getName)
+        isPost1dot18 = Material.getMaterial("MUSIC_DISC_OTHERSIDE") != null;
+
+        Class<?> resolvedCraftMagicNumbers = null;
+        Class<?> resolvedItemClazz = null;
         final String packageName = Bukkit.getServer().getClass().getPackage().getName();
         try {
             if (packageName.equals("org.bukkit.craftbukkit")) {
                 // Bukkit version is 1.20.5+
-                craftMagicNumbers = Class.forName("org.bukkit.craftbukkit.util.CraftMagicNumbers");
-                itemClazz = Class.forName("net.minecraft.world.item.Item");
+                resolvedCraftMagicNumbers = Class.forName("org.bukkit.craftbukkit.util.CraftMagicNumbers");
+                resolvedItemClazz = Class.forName("net.minecraft.world.item.Item");
             } else {
                 final String version = packageName.split("\\.")[3];
-                craftMagicNumbers = Class.forName("org.bukkit.craftbukkit.{v}.util.CraftMagicNumbers".replace("{v}",
+                resolvedCraftMagicNumbers = Class.forName("org.bukkit.craftbukkit.{v}.util.CraftMagicNumbers".replace("{v}",
                         version));
                 if (hasRepackagedNms) {
-                    itemClazz = Class.forName("net.minecraft.world.item.Item");
+                    resolvedItemClazz = Class.forName("net.minecraft.world.item.Item");
                 } else {
-                    itemClazz = Class.forName("net.minecraft.server.{v}.Item".replace("{v}", version));
+                    resolvedItemClazz = Class.forName("net.minecraft.server.{v}.Item".replace("{v}", version));
                 }
             }
         } catch (final ClassNotFoundException e) {
             e.printStackTrace();
         }
+        craftMagicNumbers = resolvedCraftMagicNumbers;
+        itemClazz = resolvedItemClazz;
         try {
             englishTranslations = LocaleKeys.loadTranslations();
         } catch (IOException e) {
