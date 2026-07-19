@@ -76,6 +76,7 @@ public class LocaleManager{
             isPost1dot18 = true;
         }
         final String packageName = Bukkit.getServer().getClass().getPackage().getName();
+        final String bukkitVersion = Bukkit.getBukkitVersion();
         try {
             if (packageName.equals("org.bukkit.craftbukkit")) {
                 // Bukkit version is 1.20.5+
@@ -93,11 +94,12 @@ public class LocaleManager{
             }
         } catch (final ClassNotFoundException e) {
             Bukkit.getLogger().severe("[LocaleLib] Unable to resolve NMS/CraftBukkit classes for this server "
-                    + "version: " + e.getMessage());
+                    + "version (" + bukkitVersion + "): " + e.getMessage());
         }
         if (!oldVersion && (craftMagicNumbers == null || itemClazz == null)) {
-            Bukkit.getLogger().severe("[LocaleLib] This server version does not appear to be supported. "
-                    + "Material name translation will not work; entity and enchantment translation are unaffected.");
+            Bukkit.getLogger().severe("[LocaleLib] This server version (" + bukkitVersion + ") does not appear to "
+                    + "be supported. Material name translation will not work; entity and enchantment translation "
+                    + "are unaffected.");
         }
         try {
             englishTranslations = LocaleKeys.loadTranslations();
@@ -453,7 +455,8 @@ public class LocaleManager{
             } else {
                 if (craftMagicNumbers == null || itemClazz == null) {
                     throw new IllegalArgumentException("[LocaleLib] Cannot query material '" + material.name()
-                            + "': NMS/CraftBukkit classes were not resolved for this server version at startup.");
+                            + "': NMS/CraftBukkit classes were not resolved for this server version ("
+                            + Bukkit.getBukkitVersion() + ") at startup.");
                 }
                 try {
                     final Method itemMethod = craftMagicNumbers.getDeclaredMethod("getItem", material.getClass());
