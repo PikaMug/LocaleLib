@@ -1,3 +1,27 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2019 PikaMug
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 package me.pikamug.localelib;
 
 import java.util.regex.Matcher;
@@ -72,12 +96,8 @@ public class LocaleParser {
             if (placeholders != null && placeholderIdx < placeholders.length
                     && message.startsWith(placeholders[placeholderIdx], i)) {
                 // Flush current text segment
-                if (segment.length() > 0) {
-                    if (componentStarted) {
-                        json.append(",");
-                    }
-                    appendTextComponent(json, segment, color, bold, italic, underline, strikethrough, obfuscated);
-                    segment.setLength(0);
+                if (flushSegment(json, segment, color, bold, italic, underline, strikethrough, obfuscated,
+                        componentStarted)) {
                     componentStarted = true;
                 }
                 // Build translate component with inherited color
@@ -129,12 +149,8 @@ public class LocaleParser {
                     }
                     if (validHex) {
                         // Flush current segment before color change
-                        if (segment.length() > 0) {
-                            if (componentStarted) {
-                                json.append(",");
-                            }
-                            appendTextComponent(json, segment, color, bold, italic, underline, strikethrough, obfuscated);
-                            segment.setLength(0);
+                        if (flushSegment(json, segment, color, bold, italic, underline, strikethrough, obfuscated,
+                                componentStarted)) {
                             componentStarted = true;
                         }
                         // Extract hex color
@@ -150,39 +166,34 @@ public class LocaleParser {
                     }
                 } else if ((code >= '0' && code <= '9') || (code >= 'a' && code <= 'f')) {
                     // Standard color code: flush and update color
-                    if (segment.length() > 0) {
-                        if (componentStarted) {
-                            json.append(",");
-                        }
-                        appendTextComponent(json, segment, color, bold, italic, underline, strikethrough, obfuscated);
-                        segment.setLength(0);
+                    if (flushSegment(json, segment, color, bold, italic, underline, strikethrough, obfuscated,
+                            componentStarted)) {
                         componentStarted = true;
                     }
                     color = getMinecraftColorName(code);
                     i += 2;
-                } else if (code == 'l') {
-                    bold = true;
-                    i += 2;
-                } else if (code == 'o') {
-                    italic = true;
-                    i += 2;
-                } else if (code == 'n') {
-                    underline = true;
-                    i += 2;
-                } else if (code == 'm') {
-                    strikethrough = true;
-                    i += 2;
-                } else if (code == 'k') {
-                    obfuscated = true;
+                } else if (code == 'l' || code == 'o' || code == 'n' || code == 'm' || code == 'k') {
+                    // Style change: flush so the modifier only applies to following text
+                    if (flushSegment(json, segment, color, bold, italic, underline, strikethrough, obfuscated,
+                            componentStarted)) {
+                        componentStarted = true;
+                    }
+                    if (code == 'l') {
+                        bold = true;
+                    } else if (code == 'o') {
+                        italic = true;
+                    } else if (code == 'n') {
+                        underline = true;
+                    } else if (code == 'm') {
+                        strikethrough = true;
+                    } else if (code == 'k') {
+                        obfuscated = true;
+                    }
                     i += 2;
                 } else if (code == 'r') {
                     // Reset: flush and clear all formatting
-                    if (segment.length() > 0) {
-                        if (componentStarted) {
-                            json.append(",");
-                        }
-                        appendTextComponent(json, segment, color, bold, italic, underline, strikethrough, obfuscated);
-                        segment.setLength(0);
+                    if (flushSegment(json, segment, color, bold, italic, underline, strikethrough, obfuscated,
+                            componentStarted)) {
                         componentStarted = true;
                     }
                     color = null;
@@ -203,15 +214,32 @@ public class LocaleParser {
         }
 
         // Flush remaining segment
-        if (segment.length() > 0) {
-            if (componentStarted) {
-                json.append(",");
-            }
-            appendTextComponent(json, segment, color, bold, italic, underline, strikethrough, obfuscated);
-        }
+        flushSegment(json, segment, color, bold, italic, underline, strikethrough, obfuscated, componentStarted);
 
         json.append("]");
         return json.toString();
+    }
+
+    /**
+     * Flush the pending text segment as a JSON component, if any.
+     *
+     * @param json the JSON builder to append to
+     * @param segment the pending text segment
+     * @param componentStarted whether any component has already been written
+     * @return true if a component was written
+     */
+    private boolean flushSegment(final StringBuilder json, final StringBuilder segment, final String color,
+            final boolean bold, final boolean italic, final boolean underline, final boolean strikethrough,
+            final boolean obfuscated, final boolean componentStarted) {
+        if (segment.length() == 0) {
+            return false;
+        }
+        if (componentStarted) {
+            json.append(",");
+        }
+        appendTextComponent(json, segment, color, bold, italic, underline, strikethrough, obfuscated);
+        segment.setLength(0);
+        return true;
     }
 
     /**

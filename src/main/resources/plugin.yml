@@ -2,6 +2,7 @@ name: LocaleLib
 main: me.pikamug.localelib.LocaleLib
 version: ${project.version}
 api-version: 1.13
+folia-supported: true
 description: Show translated names of items, entities & more in client's language
 website: https://github.com/PikaMug/LocaleLib
 author: PikaMug

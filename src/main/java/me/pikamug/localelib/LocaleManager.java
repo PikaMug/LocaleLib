@@ -37,6 +37,9 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.potion.Potion;
 
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.chat.ComponentSerializer;
+
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Collection;
@@ -60,6 +63,40 @@ public class LocaleManager{
     private final Map<String, String> oldEntities = LocaleKeys.getEntityKeys();
     private Map<String, String> englishTranslations;
     private final LocaleParser localeParser = new LocaleParser();
+    private static final boolean isFolia = checkFolia();
+
+    /**
+     * Checks whether the server is running Folia, whose threading model forbids
+     * dispatching console commands from region threads. Uses a public folia-api
+     * class that has shipped in every Folia release since 1.19.4.
+     *
+     * @return true if the server is running Folia
+     */
+    private static boolean checkFolia() {
+        try {
+            Class.forName("io.papermc.paper.threadedregions.RegionizedServerInitEvent");
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Send a tellraw JSON message to the player. On Folia, dispatching the tellraw
+     * command via the console is not allowed outside the global tick thread, so the
+     * JSON is sent directly through the player's chat API instead.
+     *
+     * @param player the player to send the message to
+     * @param json the tellraw JSON array
+     */
+    private void sendTellraw(final Player player, final String json) {
+        if (isFolia) {
+            final BaseComponent[] components = ComponentSerializer.parse(json);
+            player.spigot().sendMessage(components);
+        } else {
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + formatName(player) + " " + json);
+        }
+    }
 
     public LocaleManager() {
         oldVersion = isBelow113();
@@ -131,7 +168,7 @@ public class LocaleManager{
             }
             final String json = localeParser.buildTellrawJson(msg, new String[]{"<prefix>", "<item>"},
                     new String[]{prefixKey, potionName});
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + formatName(player) + " " + json);
+            sendTellraw(player, json);
             return true;
         }
         return sendMessage(player, message, itemStack.getType(), itemStack.getDurability(), itemStack.getEnchantments(),
@@ -192,7 +229,7 @@ public class LocaleManager{
             idx++;
         }
         final String json = localeParser.buildTellrawJson(convertedMessage, placeholders, translateKeys);
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + formatName(player) + " " + json);
+        sendTellraw(player, json);
         return true;
     }
 
@@ -252,7 +289,7 @@ public class LocaleManager{
                 idx++;
             }
             final String json = localeParser.buildTellrawJson(convertedMessage, placeholders, translateKeys);
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + formatName(player) + " " + json);
+            sendTellraw(player, json);
         }
         return true;
     }
@@ -276,7 +313,7 @@ public class LocaleManager{
         final String convertedMessage = localeParser.convertFormattingTokens(message);
         final String key = queryEntityType(type, extra);
         final String json = localeParser.buildTellrawJson(convertedMessage, new String[]{"<mob>"}, new String[]{key});
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + formatName(player) + " " + json);
+        sendTellraw(player, json);
         return true;
     }
 
